@@ -1,0 +1,3455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ali Saffari — Archive 2089</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Space+Grotesk:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════
+   ROOT TOKENS
+═══════════════════════════════════════════════ */
+:root {
+  --bg:       #050505;
+  --fg:       #F2F0EB;
+  --orange:   #FF5A00;
+  --blue:     #00C8FF;
+  --dim:      rgba(242,240,235,0.5);
+  --ghost:    rgba(242,240,235,0.07);
+  --rule:     rgba(242,240,235,0.1);
+  --rule-2:   rgba(242,240,235,0.05);
+  --disp: 'Bebas Neue', sans-serif;
+  --ital: 'Cormorant Garamond', serif;
+  --mono: 'DM Mono', monospace;
+  --body: 'Space Grotesk', sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--body);
+  overflow-x: hidden;
+}
+
+/* hide system cursor only on real mice */
+@media (pointer: fine) {
+  body { cursor: none; }
+}
+::selection { background: var(--orange); color: #000; }
+
+/* ═══════════════════════════════════════════════
+   LOADER
+═══════════════════════════════════════════════ */
+#loader {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 0 8vw;
+  overflow: hidden;
+  transition: opacity 0.8s ease, visibility 0.8s ease;
+}
+#loader.out { opacity: 0; visibility: hidden; }
+
+.loader-bar-wrap {
+  width: 100%;
+  max-width: 600px;
+  height: 1px;
+  background: var(--rule);
+  margin-top: 32px;
+  position: relative;
+  overflow: hidden;
+}
+.loader-bar {
+  position: absolute;
+  top: 0; left: 0;
+  height: 100%;
+  background: var(--orange);
+  width: 0%;
+  transition: width 0.05s linear;
+}
+.loader-title {
+  font-family: var(--disp);
+  font-size: clamp(48px, 8vw, 120px);
+  line-height: 0.88;
+  letter-spacing: -0.01em;
+  color: var(--fg);
+}
+.loader-title .outline {
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--fg);
+}
+.loader-meta {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  color: var(--blue);
+  margin-top: 20px;
+}
+.loader-pct {
+  font-family: var(--disp);
+  font-size: clamp(80px, 15vw, 200px);
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(242,240,235,0.08);
+  position: absolute;
+  right: 8vw;
+  bottom: 8vh;
+  line-height: 1;
+  user-select: none;
+  letter-spacing: -0.02em;
+}
+
+/* ═══════════════════════════════════════════════
+   GRAIN CANVAS
+═══════════════════════════════════════════════ */
+#grain {
+  position: fixed;
+  inset: 0;
+  z-index: 8000;
+  pointer-events: none;
+  opacity: 0.045;
+  mix-blend-mode: screen;
+}
+
+/* ═══════════════════════════════════════════════
+   SCANLINES
+═══════════════════════════════════════════════ */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 7999;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.03) 2px,
+    rgba(0,0,0,0.03) 4px
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   CURSOR
+═══════════════════════════════════════════════ */
+#cur {
+  position: fixed;
+  width: 7px; height: 7px;
+  background: var(--orange);
+  border-radius: 50%;
+  z-index: 8500;
+  pointer-events: none;
+  transform: translate(-50%,-50%);
+  transition: width .25s, height .25s, background .25s, border-radius .25s;
+}
+#cur-ring {
+  position: fixed;
+  width: 38px; height: 38px;
+  border: 1px solid rgba(255,90,0,.35);
+  border-radius: 50%;
+  z-index: 8499;
+  pointer-events: none;
+  transform: translate(-50%,-50%);
+  transition: width .35s, height .35s, border-color .35s, border-radius .35s;
+}
+#cur.big { width: 12px; height: 12px; background: var(--blue); border-radius: 50%; }
+#cur-ring.big { width: 60px; height: 60px; border-color: rgba(0,200,255,.4); }
+#cur.square { border-radius: 2px; width: 10px; height: 10px; }
+#cur-ring.square { border-radius: 4px; }
+
+/* ═══════════════════════════════════════════════
+   NAV
+═══════════════════════════════════════════════ */
+nav {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 500;
+  padding: 0 48px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+nav::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(5,5,5,.92) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: -1;
+}
+.nav-logo {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .2em;
+  color: var(--fg);
+  text-decoration: none;
+  opacity: .65;
+  transition: opacity .3s;
+}
+.nav-logo:hover { opacity: 1; }
+.nav-logo em { color: var(--orange); font-style: normal; }
+.nav-links { list-style: none; display: flex; gap: 36px; }
+.nav-links a {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .2em;
+  color: var(--fg);
+  text-decoration: none;
+  opacity: .4;
+  text-transform: uppercase;
+  transition: opacity .3s, color .3s;
+  position: relative;
+}
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  bottom: -4px; left: 0;
+  width: 0; height: 1px;
+  background: var(--orange);
+  transition: width .4s cubic-bezier(.16,1,.3,1);
+}
+.nav-links a:hover { opacity: 1; color: var(--orange); }
+.nav-links a:hover::after { width: 100%; }
+.nav-links a.active { opacity: 1; color: var(--orange); }
+.nav-links a.active::after { width: 100%; }
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+#nav-clock {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .15em;
+  color: var(--dim);
+  opacity: .6;
+}
+.nav-dot {
+  width: 6px; height: 6px;
+  background: var(--blue);
+  border-radius: 50%;
+  animation: blink 2s ease infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.15} }
+
+/* ═══════════════════════════════════════════════
+   SHARED UTILITIES
+═══════════════════════════════════════════════ */
+.meta {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .24em;
+  text-transform: uppercase;
+  color: rgba(242,240,235,.38);
+  line-height: 1.7;
+}
+.meta-o { color: var(--orange); }
+.meta-b { color: var(--blue); }
+
+.reveal {
+  opacity: 0;
+  transform: translateY(36px);
+  transition: opacity .95s cubic-bezier(.16,1,.3,1), transform .95s cubic-bezier(.16,1,.3,1);
+}
+.reveal.vis { opacity: 1; transform: none; }
+.rd1 { transition-delay: .08s; }
+.rd2 { transition-delay: .18s; }
+.rd3 { transition-delay: .3s; }
+.rd4 { transition-delay: .44s; }
+.rd5 { transition-delay: .58s; }
+
+/* split-char animation */
+.char {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(60px) rotate(4deg);
+  transition: opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1);
+}
+.char.vis { opacity: 1; transform: none; }
+
+/* horizontal rule with label */
+.section-rule {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 80px;
+}
+.section-rule::before {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--rule);
+}
+.section-rule-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .3em;
+  color: rgba(242,240,235,.25);
+  white-space: nowrap;
+}
+.section-rule::after {
+  content: '';
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--orange);
+  flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════════
+   ① HERO
+═══════════════════════════════════════════════ */
+#hero {
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 0 48px 80px;
+}
+
+/* layered bg ghost text */
+.hero-ghost {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0;
+  overflow: hidden;
+}
+.hero-ghost-word {
+  font-family: var(--disp);
+  line-height: .83;
+  white-space: nowrap;
+  user-select: none;
+  will-change: transform;
+}
+.hgw1 {
+  font-size: clamp(100px, 21vw, 340px);
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(242,240,235,.032);
+  margin-left: 2vw;
+}
+.hgw2 {
+  font-size: clamp(80px, 16vw, 260px);
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(255,90,0,.04);
+  margin-left: 10vw;
+}
+.hgw3 {
+  font-size: clamp(100px, 19vw, 300px);
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(0,200,255,.03);
+  margin-left: -2vw;
+}
+
+/* orange vertical accent */
+.hero-accent-line {
+  position: absolute;
+  left: 48px;
+  top: 15%;
+  width: 1px;
+  height: 30vh;
+  background: linear-gradient(180deg, transparent, var(--orange), transparent);
+  opacity: .6;
+  animation: lineBreath 4s ease infinite;
+}
+@keyframes lineBreath {
+  0%,100% { opacity: .4; transform: scaleY(1); }
+  50% { opacity: .8; transform: scaleY(1.08); }
+}
+
+.hero-main {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: flex-end;
+  gap: 60px;
+}
+
+.hero-name-wrap {}
+
+/* coordinate badge */
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--rule);
+  padding: 6px 16px;
+  margin-bottom: 28px;
+  background: rgba(255,90,0,.05);
+}
+.hero-badge-dot {
+  width: 5px; height: 5px;
+  background: var(--orange);
+  border-radius: 50%;
+  animation: blink 2s infinite;
+}
+.hero-badge span {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .25em;
+  color: var(--orange);
+}
+
+.hero-name {
+  font-family: var(--disp);
+  font-size: clamp(110px, 18vw, 300px);
+  line-height: .83;
+  letter-spacing: -.02em;
+  margin: 0;
+}
+.hero-name-line1 { color: var(--fg); display: block; }
+.hero-name-line2 {
+  display: block;
+  color: transparent;
+  -webkit-text-stroke: 2px var(--fg);
+  padding-left: clamp(24px, 4vw, 80px);
+}
+
+.hero-tagline {
+  margin-top: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.hero-tagline-item {
+  font-family: var(--ital);
+  font-size: clamp(14px, 1.6vw, 22px);
+  font-style: italic;
+  color: var(--fg);
+  opacity: .55;
+  letter-spacing: .03em;
+  transition: opacity .3s;
+}
+.hero-tagline-item:hover { opacity: 1; }
+
+.hero-right-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 28px;
+  padding-bottom: 12px;
+}
+.hero-meta-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  text-align: right;
+}
+.archive-id {
+  font-family: var(--disp);
+  font-size: clamp(16px, 2vw, 28px);
+  letter-spacing: .3em;
+  color: var(--orange);
+  line-height: 1;
+}
+
+/* animated vertical text */
+.hero-vertical-text {
+  writing-mode: vertical-rl;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .25em;
+  color: rgba(242,240,235,.2);
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+/* bottom strip */
+.hero-strip {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 72px;
+  border-top: 1px solid var(--rule);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 48px;
+  z-index: 2;
+}
+.hero-strip-progress {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .25em;
+  color: rgba(242,240,235,.25);
+  text-transform: uppercase;
+}
+.strip-track {
+  width: 60px; height: 1px;
+  background: rgba(242,240,235,.1);
+  position: relative; overflow: hidden;
+}
+.strip-track::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 60%; height: 100%;
+  background: var(--orange);
+  animation: trackScan 3s ease-in-out infinite;
+}
+@keyframes trackScan {
+  0% { left: -60%; }
+  100% { left: 140%; }
+}
+
+/* scroll arrow */
+.scroll-arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  position: absolute;
+  right: 48px;
+  bottom: 90px;
+  z-index: 2;
+}
+.scroll-arrow-line {
+  width: 1px;
+  height: 48px;
+  background: linear-gradient(180deg, transparent, var(--fg));
+  animation: arrowDrop 2s ease infinite;
+  opacity: .25;
+}
+@keyframes arrowDrop {
+  0%,100% { transform: scaleY(1); opacity: .25; }
+  50% { transform: scaleY(1.3); opacity: .5; }
+}
+.scroll-arrow-label {
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: .3em;
+  color: rgba(242,240,235,.25);
+  text-transform: uppercase;
+  writing-mode: vertical-rl;
+  margin-top: 6px;
+}
+
+/* ═══════════════════════════════════════════════
+   MARQUEE DIVIDER
+═══════════════════════════════════════════════ */
+.marquee-section {
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  overflow: hidden;
+  padding: 18px 0;
+  background: rgba(255,90,0,.015);
+}
+.marquee-track {
+  display: flex;
+  gap: 0;
+  width: max-content;
+  animation: marqueeRun 28s linear infinite;
+}
+@keyframes marqueeRun {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.marquee-item {
+  font-family: var(--disp);
+  font-size: 13px;
+  letter-spacing: .35em;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(242,240,235,.18);
+  white-space: nowrap;
+  padding: 0 40px;
+}
+.marquee-item.accent {
+  color: var(--orange);
+  -webkit-text-stroke: 0;
+}
+
+/* ═══════════════════════════════════════════════
+   ② ARCHIVE
+═══════════════════════════════════════════════ */
+#archive {
+  padding: 120px 0 0;
+}
+.archive-head {
+  padding: 0 48px 80px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: flex-end;
+  gap: 40px;
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 48px;
+}
+.archive-head-title {
+  font-family: var(--disp);
+  font-size: clamp(64px, 10vw, 160px);
+  line-height: .86;
+  letter-spacing: -.01em;
+  color: var(--fg);
+}
+.archive-head-title .ao { color: var(--orange); }
+.archive-head-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  padding-bottom: 8px;
+}
+
+/* project items */
+.project {
+  display: grid;
+  grid-template-columns: 80px 1fr 1fr;
+  border-bottom: 1px solid var(--rule);
+  transition: background .5s ease;
+  cursor: none;
+}
+.project:hover { background: rgba(255,90,0,.018); }
+
+.project-num-col {
+  border-right: 1px solid var(--rule);
+  padding: 60px 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 64px;
+}
+.project-num {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .2em;
+  color: var(--orange);
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+.project-info {
+  padding: 60px 60px 60px 48px;
+  border-right: 1px solid var(--rule);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 40px;
+}
+.project-img-col {
+  padding: 40px 48px 40px 48px;
+  display: flex;
+  align-items: center;
+}
+
+.project-cat {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .25em;
+  color: rgba(242,240,235,.3);
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  display: block;
+}
+.project-title {
+  font-family: var(--disp);
+  font-size: clamp(44px, 5.5vw, 92px);
+  line-height: .88;
+  letter-spacing: -.01em;
+  color: var(--fg);
+  margin-bottom: 24px;
+}
+.project-subtitle {
+  font-family: var(--ital);
+  font-size: clamp(15px, 1.8vw, 22px);
+  font-style: italic;
+  color: var(--blue);
+  margin-bottom: 24px;
+  display: block;
+}
+.project-desc {
+  font-family: var(--body);
+  font-size: 14px;
+  line-height: 1.9;
+  color: rgba(242,240,235,.42);
+  font-weight: 300;
+  max-width: 400px;
+  flex: 1;
+}
+.project-meta-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  border-top: 1px solid var(--rule);
+  padding-top: 28px;
+}
+.pm-cell {
+  padding-right: 20px;
+}
+.pm-cell + .pm-cell {
+  padding-left: 20px;
+  border-left: 1px solid var(--rule);
+}
+.pm-label {
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: .28em;
+  color: rgba(242,240,235,.25);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  display: block;
+}
+.pm-val {
+  font-family: var(--body);
+  font-size: 13px;
+  color: var(--fg);
+  font-weight: 400;
+}
+
+/* Visual art plates */
+.art-plate {
+  width: 100%;
+  aspect-ratio: 3/2;
+  position: relative;
+  overflow: hidden;
+  transition: transform .8s cubic-bezier(.16,1,.3,1);
+}
+.project:hover .art-plate { transform: scale(1.025); }
+
+/* Plate 01 — architectural grid */
+.plate-01 {
+  background: #0c0c0c;
+}
+.plate-01 svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+/* Plate 02 — typographic */
+.plate-02 { background: #080808; }
+.plate-02 svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+/* Plate 03 — poster */
+.plate-03 { background: #0a0a0a; }
+.plate-03 svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+/* Plate 04 — calligraphic */
+.plate-04 { background: #090909; }
+.plate-04 svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+.plate-label {
+  position: absolute;
+  bottom: 12px; left: 14px;
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: .2em;
+  color: rgba(242,240,235,.2);
+  text-transform: uppercase;
+}
+.plate-corner {
+  position: absolute;
+  top: 14px; right: 14px;
+  width: 18px; height: 18px;
+  border-top: 1px solid rgba(255,90,0,.3);
+  border-right: 1px solid rgba(255,90,0,.3);
+}
+.plate-corner-bl {
+  position: absolute;
+  bottom: 14px; left: 14px;
+  width: 18px; height: 18px;
+  border-bottom: 1px solid rgba(242,240,235,.12);
+  border-left: 1px solid rgba(242,240,235,.12);
+}
+
+/* ═══════════════════════════════════════════════
+   ③ PHILOSOPHY
+═══════════════════════════════════════════════ */
+#philosophy {
+  padding: 160px 48px 120px;
+  border-top: 1px solid var(--rule);
+  position: relative;
+  overflow: hidden;
+}
+
+.phil-bg {
+  position: absolute;
+  top: 50%; right: -80px;
+  transform: translateY(-50%);
+  font-family: var(--disp);
+  font-size: clamp(200px, 30vw, 500px);
+  line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(242,240,235,.025);
+  pointer-events: none;
+  user-select: none;
+  letter-spacing: -.03em;
+}
+
+.phil-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 100px;
+  align-items: start;
+  position: relative;
+  z-index: 1;
+}
+
+.phil-statement {
+  font-family: var(--disp);
+  font-size: clamp(48px, 6vw, 100px);
+  line-height: .88;
+  letter-spacing: -.01em;
+  color: var(--fg);
+}
+.phil-statement .po {
+  color: transparent;
+  -webkit-text-stroke: 2px var(--orange);
+}
+.phil-statement .pb {
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--blue);
+}
+
+.phil-number {
+  font-family: var(--disp);
+  font-size: clamp(100px, 14vw, 200px);
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(242,240,235,.07);
+  line-height: 1;
+  margin-top: 20px;
+  user-select: none;
+}
+
+.phil-right {
+  padding-top: 8px;
+}
+.phil-intro {
+  font-family: var(--ital);
+  font-size: clamp(18px, 2.2vw, 28px);
+  font-style: italic;
+  line-height: 1.65;
+  color: rgba(242,240,235,.65);
+  margin-bottom: 48px;
+  font-weight: 300;
+}
+.phil-body {
+  font-family: var(--body);
+  font-size: 14px;
+  line-height: 1.95;
+  color: rgba(242,240,235,.42);
+  font-weight: 300;
+  margin-bottom: 56px;
+}
+.phil-body strong { color: rgba(242,240,235,.8); font-weight: 400; }
+
+.phil-principles {
+  display: flex;
+  flex-direction: column;
+}
+.principle {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--rule-2);
+  transition: padding-left .4s cubic-bezier(.16,1,.3,1);
+}
+.principle:hover { padding-left: 12px; }
+.principle-num {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .2em;
+  color: var(--orange);
+  flex-shrink: 0;
+}
+.principle-text {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .2em;
+  color: rgba(242,240,235,.4);
+  text-transform: uppercase;
+  transition: color .3s;
+}
+.principle:hover .principle-text { color: rgba(242,240,235,.8); }
+
+/* ═══════════════════════════════════════════════
+   ④ EXPERIENCE
+═══════════════════════════════════════════════ */
+#experience {
+  padding: 140px 48px 0;
+  border-top: 1px solid var(--rule);
+}
+.exp-top {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: flex-end;
+  gap: 40px;
+  margin-bottom: 100px;
+}
+.exp-heading {
+  font-family: var(--disp);
+  font-size: clamp(56px, 8vw, 130px);
+  line-height: .86;
+  letter-spacing: -.01em;
+  color: var(--fg);
+}
+.exp-heading .eo {
+  color: transparent;
+  -webkit-text-stroke: 2px var(--fg);
+}
+.exp-intro {
+  font-family: var(--ital);
+  font-size: 18px;
+  font-style: italic;
+  line-height: 1.6;
+  color: rgba(242,240,235,.4);
+  font-weight: 300;
+  max-width: 360px;
+  padding-bottom: 8px;
+}
+
+.exp-timeline {
+  display: flex;
+  flex-direction: column;
+}
+.exp-item {
+  display: grid;
+  grid-template-columns: 220px 1fr auto;
+  gap: 48px;
+  padding: 56px 0;
+  border-bottom: 1px solid var(--rule);
+  position: relative;
+  transition: background .4s;
+}
+.exp-item::before {
+  content: '';
+  position: absolute;
+  left: -48px; top: 0; bottom: 0;
+  width: 2px;
+  background: transparent;
+  transition: background .5s ease;
+}
+.exp-item:hover::before { background: var(--orange); }
+.exp-item:hover { background: rgba(255,90,0,.015); }
+
+.exp-left {}
+.exp-period {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .18em;
+  color: var(--orange);
+  line-height: 1.8;
+  margin-bottom: 8px;
+}
+.exp-status {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: .25em;
+  color: var(--blue);
+  border: 1px solid rgba(0,200,255,.25);
+  padding: 3px 10px;
+}
+
+.exp-mid {}
+.exp-role {
+  font-family: var(--disp);
+  font-size: clamp(26px, 3.2vw, 52px);
+  line-height: .92;
+  letter-spacing: -.01em;
+  color: var(--fg);
+  margin-bottom: 10px;
+}
+.exp-co {
+  font-family: var(--ital);
+  font-size: 16px;
+  font-style: italic;
+  color: var(--blue);
+  display: block;
+  margin-bottom: 20px;
+}
+.exp-desc {
+  font-family: var(--body);
+  font-size: 13px;
+  line-height: 1.85;
+  color: rgba(242,240,235,.38);
+  font-weight: 300;
+  max-width: 440px;
+}
+
+.exp-right {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 8px;
+  padding-top: 4px;
+  align-items: flex-end;
+}
+.exp-tag {
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: .2em;
+  color: rgba(242,240,235,.28);
+  border: 1px solid rgba(242,240,235,.1);
+  padding: 5px 12px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: border-color .3s, color .3s;
+}
+.exp-item:hover .exp-tag {
+  border-color: rgba(255,90,0,.25);
+  color: rgba(242,240,235,.55);
+}
+
+/* ═══════════════════════════════════════════════
+   STATEMENT STRIP
+═══════════════════════════════════════════════ */
+#statement-strip {
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  padding: 60px 48px;
+  background: rgba(255,90,0,0.015);
+}
+.strip-inner {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+.strip-rule {
+  flex: 1;
+  height: 1px;
+  background: var(--rule);
+  flex-shrink: 0;
+  min-width: 40px;
+}
+.strip-text {
+  font-family: var(--ital);
+  font-size: clamp(18px, 2.5vw, 28px);
+  font-style: italic;
+  font-weight: 300;
+  color: rgba(242,240,235,.55);
+  text-align: center;
+  line-height: 1.5;
+  flex-shrink: 1;
+}
+@media (max-width: 768px) {
+  #statement-strip { padding: 40px 20px; }
+  .strip-inner { gap: 20px; }
+  .strip-rule { min-width: 20px; }
+}
+
+/* ═══════════════════════════════════════════════
+   ⑤ CONTACT
+═══════════════════════════════════════════════ */
+#contact {
+  padding: 160px 48px 80px;
+  border-top: 1px solid var(--rule);
+  position: relative;
+  overflow: hidden;
+}
+.contact-bg {
+  position: absolute;
+  bottom: -60px; right: -40px;
+  font-family: var(--disp);
+  font-size: clamp(160px, 28vw, 480px);
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(242,240,235,.022);
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+  letter-spacing: -.03em;
+}
+
+.contact-eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .3em;
+  color: rgba(242,240,235,.3);
+  text-transform: uppercase;
+  margin-bottom: 40px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.contact-eyebrow::before {
+  content: '';
+  width: 40px; height: 1px;
+  background: var(--orange);
+  flex-shrink: 0;
+}
+
+.contact-hl {
+  font-family: var(--disp);
+  font-size: clamp(72px, 12vw, 210px);
+  line-height: .82;
+  letter-spacing: -.02em;
+  color: var(--fg);
+  margin-bottom: 100px;
+  position: relative;
+  z-index: 1;
+}
+.contact-hl .co { color: transparent; -webkit-text-stroke: 2px var(--fg); }
+.contact-hl .coo { color: var(--orange); }
+
+.contact-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  position: relative;
+  z-index: 1;
+}
+
+.contact-email-wrap {
+  border-top: 1px solid var(--rule);
+  padding-top: 32px;
+}
+.contact-email-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .28em;
+  color: rgba(242,240,235,.28);
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  display: block;
+}
+.contact-email {
+  font-family: var(--disp);
+  font-size: clamp(20px, 2.8vw, 42px);
+  color: var(--fg);
+  text-decoration: none;
+  letter-spacing: .01em;
+  display: block;
+  margin-bottom: 16px;
+  transition: color .3s;
+  word-break: break-all;
+}
+.contact-email:hover { color: var(--orange); }
+.contact-avail {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .2em;
+  color: rgba(242,240,235,.25);
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 24px;
+}
+.avail-dot {
+  width: 5px; height: 5px;
+  background: #4cff8f;
+  border-radius: 50%;
+  animation: blink 2s infinite;
+}
+
+/* Social links */
+.social-stack {
+  display: flex;
+  flex-direction: column;
+}
+.soc-item {
+  border-bottom: 1px solid var(--rule);
+}
+.soc-link {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 22px 0;
+  text-decoration: none;
+  transition: padding-left .45s cubic-bezier(.16,1,.3,1), padding-right .45s cubic-bezier(.16,1,.3,1);
+  overflow: hidden;
+}
+.soc-link:hover { padding-left: 14px; }
+.soc-name {
+  font-family: var(--disp);
+  font-size: clamp(24px, 3vw, 44px);
+  color: var(--fg);
+  letter-spacing: .01em;
+  transition: color .3s;
+}
+.soc-link:hover .soc-name { color: var(--orange); }
+.soc-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.soc-handle {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .18em;
+  color: rgba(242,240,235,.22);
+  text-transform: uppercase;
+  transition: color .3s;
+}
+.soc-link:hover .soc-handle { color: rgba(242,240,235,.5); }
+.soc-arrow {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: rgba(242,240,235,.22);
+  transition: color .3s, transform .4s cubic-bezier(.16,1,.3,1);
+}
+.soc-link:hover .soc-arrow { color: var(--orange); transform: translateX(6px) rotate(-45deg); }
+
+/* ═══════════════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════════════ */
+footer {
+  border-top: 1px solid var(--rule);
+  padding: 28px 48px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 20px;
+}
+footer .meta { opacity: .28; }
+.footer-mid {
+  text-align: center;
+}
+.footer-right { text-align: right; }
+.footer-mark {
+  font-family: var(--disp);
+  font-size: 22px;
+  letter-spacing: .2em;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(242,240,235,.15);
+}
+
+/* ═══════════════════════════════════════════════
+   MOBILE NAV — hamburger button (always in DOM)
+═══════════════════════════════════════════════ */
+.nav-hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 44px; height: 44px;
+  background: none;
+  border: 1px solid var(--rule);
+  cursor: pointer;
+  padding: 10px 11px;
+  flex-shrink: 0;
+  transition: border-color .3s;
+}
+.nav-hamburger span {
+  display: block;
+  width: 100%; height: 1px;
+  background: var(--fg);
+  transition: transform .35s cubic-bezier(.16,1,.3,1), opacity .25s ease, width .3s ease;
+  transform-origin: center;
+}
+.nav-hamburger.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+.nav-hamburger.open span:nth-child(2) { opacity: 0; width: 0; }
+.nav-hamburger.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+.nav-hamburger:hover { border-color: var(--orange); }
+.nav-hamburger:hover span { background: var(--orange); }
+
+/* mobile drawer */
+.nav-drawer {
+  display: none;
+  position: fixed;
+  top: 72px; left: 0; right: 0;
+  background: rgba(5,5,5,.98);
+  border-bottom: 1px solid var(--rule);
+  z-index: 490;
+  padding: 32px 24px 40px;
+  flex-direction: column;
+  gap: 0;
+  transform: translateY(-20px);
+  opacity: 0;
+  transition: transform .4s cubic-bezier(.16,1,.3,1), opacity .35s ease;
+  pointer-events: none;
+  backdrop-filter: blur(12px);
+}
+.nav-drawer.open {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+.nav-drawer-item {
+  border-bottom: 1px solid var(--rule-2);
+}
+.nav-drawer-link {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 0;
+  font-family: var(--disp);
+  font-size: clamp(28px, 7vw, 44px);
+  color: var(--fg);
+  text-decoration: none;
+  letter-spacing: .02em;
+  transition: color .3s, padding-left .4s cubic-bezier(.16,1,.3,1);
+}
+.nav-drawer-link:hover,
+.nav-drawer-link:active { color: var(--orange); padding-left: 8px; }
+.nav-drawer-arrow {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: rgba(242,240,235,.25);
+  transition: color .3s, transform .3s;
+}
+.nav-drawer-link:hover .nav-drawer-arrow { color: var(--orange); transform: rotate(-45deg); }
+.nav-drawer-meta {
+  margin-top: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ═══════════════════════════════════════════════
+   TABLET  ≤ 1024px
+═══════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  /* projects: hide image column, show it below info instead */
+  .project { grid-template-columns: 60px 1fr; }
+  .project-img-col { display: none; }
+  .exp-item { grid-template-columns: 160px 1fr; }
+  .exp-right { display: none; }
+  #numbers { display: none; } /* replaced by statement strip */
+}
+
+/* ═══════════════════════════════════════════════
+   MOBILE  ≤ 768px
+═══════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  /* ── nav ── */
+  nav { padding: 0 20px; height: 64px; }
+  .nav-links { display: none; }
+  #nav-clock { display: none; }
+  .nav-dot { display: none; }
+  .nav-hamburger { display: flex; }
+  .nav-drawer { display: flex; top: 64px; }
+
+  /* ── hero ── */
+  #hero { padding: 0 20px 0; min-height: 100svh; }
+  .hero-ghost { display: none; }
+  .hero-accent-line { display: none; }
+  .hero-main {
+    grid-template-columns: 1fr;
+    gap: 0;
+    padding-top: 80px;
+    padding-bottom: 80px;
+    min-height: calc(100svh - 130px);
+    align-items: flex-start;
+    justify-content: flex-start;
+  }
+  .hero-name-wrap { padding-top: 20px; }
+  .hero-badge { margin-bottom: 20px; }
+  .hero-right-col {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: flex-end;
+    gap: 16px;
+    margin-top: 28px;
+  }
+  .hero-meta-stack { align-items: flex-start; }
+  .hero-vertical-text { display: none; }
+  .hero-strip {
+    padding: 0 20px;
+    height: 56px;
+    font-size: 9px;
+  }
+  .hero-strip-progress { gap: 10px; }
+  .strip-track { width: 36px; }
+  .scroll-arrow { display: none; }
+
+  /* ── marquee ── */
+  .marquee-item { font-size: 11px; padding: 0 20px; }
+
+  /* ── archive ── */
+  #archive { padding-top: 60px; }
+  .archive-head {
+    padding: 0 20px 32px;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 0;
+  }
+
+  /* projects become single-column cards on mobile */
+  .project {
+    grid-template-columns: 1fr;
+    border-bottom: 1px solid var(--rule);
+  }
+  .project-num-col {
+    border-right: none;
+    border-bottom: 1px solid var(--rule-2);
+    padding: 16px 20px;
+    flex-direction: row;
+    justify-content: flex-start;
+    writing-mode: horizontal-tb;
+  }
+  .project-num {
+    writing-mode: horizontal-tb;
+    transform: none;
+    font-size: 10px;
+  }
+  /* show image on mobile — full width above text */
+  .project-img-col {
+    display: block !important;
+    padding: 0;
+    order: -1;
+  }
+  .art-plate {
+    aspect-ratio: 16/10;
+    border-radius: 0;
+  }
+  /* tap feedback for mobile */
+  .art-plate:active { opacity: .85; }
+
+  .project-info {
+    padding: 28px 20px 32px;
+    border-right: none;
+    gap: 24px;
+  }
+  .project-title { margin-bottom: 12px; }
+  .project-desc { max-width: 100%; }
+  .project-meta-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+
+  /* ── philosophy ── */
+  #philosophy { padding: 80px 20px 80px; }
+  .phil-grid { grid-template-columns: 1fr; gap: 48px; }
+  .phil-bg { display: none; }
+  .section-rule { margin-bottom: 48px; }
+
+  /* ── experience ── */
+  #experience { padding: 80px 20px 0; }
+  .exp-top {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 48px;
+  }
+  .exp-item {
+    grid-template-columns: 1fr;
+    padding: 32px 0;
+    gap: 16px;
+  }
+  .exp-item::before { display: none; }
+  .exp-item:hover { background: none; padding-left: 0; }
+  .exp-left { display: flex; align-items: center; gap: 16px; }
+  .exp-period { margin-bottom: 0; }
+
+  /* numbers replaced by statement strip — no mobile rules needed */
+
+  /* ── contact ── */
+  #contact { padding: 80px 20px 60px; }
+  .contact-eyebrow { margin-bottom: 28px; }
+  .contact-hl { font-size: clamp(56px, 14vw, 120px); margin-bottom: 48px; line-height: .86; }
+  .contact-body { grid-template-columns: 1fr; gap: 48px; }
+  .contact-bg { display: none; }
+  .contact-email { font-size: clamp(18px, 5vw, 28px); }
+  .soc-link { padding: 18px 0; }
+
+  /* ── footer ── */
+  footer {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    text-align: center;
+    padding: 24px 20px;
+  }
+  .footer-right { text-align: center; }
+  .footer-mid { order: -1; margin-bottom: 8px; }
+
+  /* ── cursor off on touch ── (handled via JS pointer check) */
+
+  /* ── lightbox mobile ── */
+  .lb-bar { padding: 14px 16px; gap: 8px; flex-wrap: nowrap; }
+  .lb-title-wrap { min-width: 0; flex: 1; }
+  .lb-project-name { font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lb-project-meta { display: none; }
+  .lb-controls { gap: 4px; flex-shrink: 0; }
+  .lb-btn { width: 40px; height: 40px; font-size: 14px; }
+  .lb-close { width: 40px; height: 40px; margin-left: 8px; font-size: 16px; }
+  .lb-counter { font-size: 9px; min-width: 40px; }
+  .lb-kbd-hint { display: none; }
+  .lb-stage { padding: 16px 8px; }
+  .lb-prev { left: 2px; width: 44px; height: 44px; font-size: 16px; }
+  .lb-next { right: 2px; width: 44px; height: 44px; font-size: 16px; }
+  #lb-img { max-height: calc(100svh - 180px); }
+  .lb-strip { padding: 10px 16px; gap: 6px; }
+  .lb-thumb { width: 52px; height: 36px; }
+}
+
+/* ═══════════════════════════════════════════════
+   SMALL PHONES  ≤ 430px
+═══════════════════════════════════════════════ */
+@media (max-width: 430px) {
+  .hero-name { font-size: 24vw; }
+  .hero-badge span { font-size: 8px; letter-spacing: .12em; }
+  .archive-head-title { font-size: 15vw; }
+  .project-title { font-size: 12vw; }
+  .project-subtitle { font-size: 14px; }
+  .project-meta-row { grid-template-columns: 1fr 1fr; }
+  .pm-cell + .pm-cell { border-left: 1px solid var(--rule); }
+  .phil-statement { font-size: 13vw; }
+  .exp-heading { font-size: 13vw; }
+  .exp-role { font-size: 9.5vw; }
+  .contact-hl { font-size: 13vw; }
+  .lb-prev, .lb-next { display: none; }
+  #lb-img { max-height: calc(100svh - 160px); }
+}
+
+/* ═══════════════════════════════════════════════
+   LIGHTBOX
+═══════════════════════════════════════════════ */
+
+/* clicking hint on image plates */
+.art-plate { cursor: none; }
+.plate-click-hint {
+  position: absolute;
+  bottom: 14px; right: 14px;
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: .2em;
+  color: rgba(242,240,235,0);
+  text-transform: uppercase;
+  transition: color .4s ease;
+  pointer-events: none;
+  z-index: 2;
+}
+.art-plate:hover .plate-click-hint { color: rgba(242,240,235,.45); }
+
+/* image count badge — shown on cover plate */
+.plate-img-count {
+  position: absolute;
+  top: 14px; left: 14px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .2em;
+  color: var(--fg);
+  background: rgba(5,5,5,.75);
+  border: 1px solid rgba(242,240,235,.15);
+  padding: 4px 10px;
+  z-index: 2;
+  pointer-events: none;
+  backdrop-filter: blur(4px);
+  transition: border-color .3s, color .3s;
+}
+.art-plate:hover .plate-img-count {
+  border-color: var(--orange);
+  color: var(--orange);
+}
+
+/* extra images inside plate — hidden, used as data source only */
+.plate-extra-img {
+  display: none !important;
+}
+
+/* overlay backdrop */
+#lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  background: rgba(5,5,5,0);
+  visibility: hidden;
+  transition: background .45s ease, visibility 0s .45s;
+}
+#lightbox.open {
+  background: rgba(5,5,5,.97);
+  visibility: visible;
+  transition: background .45s ease;
+}
+
+/* top bar */
+.lb-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 40px;
+  border-bottom: 1px solid var(--rule);
+  flex-shrink: 0;
+  opacity: 0;
+  transform: translateY(-16px);
+  transition: opacity .4s .1s ease, transform .4s .1s ease;
+}
+#lightbox.open .lb-bar { opacity: 1; transform: none; }
+
+.lb-title-wrap { display: flex; flex-direction: column; gap: 4px; }
+.lb-project-name {
+  font-family: var(--disp);
+  font-size: clamp(18px, 2.5vw, 32px);
+  letter-spacing: .02em;
+  color: var(--fg);
+  line-height: 1;
+}
+.lb-project-meta {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .22em;
+  color: rgba(242,240,235,.35);
+  text-transform: uppercase;
+}
+
+.lb-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.lb-counter {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .2em;
+  color: rgba(242,240,235,.35);
+  min-width: 60px;
+  text-align: center;
+}
+.lb-btn {
+  width: 44px; height: 44px;
+  border: 1px solid var(--rule);
+  background: transparent;
+  color: var(--fg);
+  font-family: var(--mono);
+  font-size: 16px;
+  cursor: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color .3s, background .3s, color .3s;
+  flex-shrink: 0;
+}
+.lb-btn:hover { border-color: var(--orange); color: var(--orange); background: rgba(255,90,0,.05); }
+.lb-btn:disabled { opacity: .2; pointer-events: none; }
+.lb-close {
+  width: 44px; height: 44px;
+  border: 1px solid var(--rule);
+  background: transparent;
+  color: var(--fg);
+  font-size: 18px;
+  cursor: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color .3s, background .3s, color .3s;
+  margin-left: 16px;
+}
+.lb-close:hover { border-color: var(--orange); color: var(--orange); background: rgba(255,90,0,.05); }
+
+/* keep custom cursor on top of lightbox overlay */
+#cur, #cur-ring { z-index: 19000; pointer-events: none; }
+
+/* main image stage */
+.lb-stage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 80px;
+  position: relative;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity .4s .15s ease;
+}
+#lightbox.open .lb-stage { opacity: 1; }
+
+.lb-img-wrap {
+  position: relative;
+  max-width: 100%;
+  max-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#lb-img {
+  max-width: 100%;
+  max-height: calc(100vh - 200px);
+  object-fit: contain;
+  display: block;
+  opacity: 0;
+  transform: scale(.96);
+  transition: opacity .5s cubic-bezier(.16,1,.3,1), transform .5s cubic-bezier(.16,1,.3,1);
+  user-select: none;
+  -webkit-user-drag: none;
+}
+#lb-img.loaded { opacity: 1; transform: scale(1); }
+
+/* corner registration marks on the image */
+.lb-img-wrap::before,
+.lb-img-wrap::after {
+  content: '';
+  position: absolute;
+  width: 16px; height: 16px;
+  pointer-events: none;
+  z-index: 8;
+  transition: opacity .4s .3s;
+  opacity: 0;
+}
+#lightbox.open .lb-img-wrap::before,
+#lightbox.open .lb-img-wrap::after { opacity: 1; }
+.lb-img-wrap::before {
+  top: -32px; left: -16px;
+  border-top: 1px solid var(--orange);
+  border-left: 1px solid var(--orange);
+}
+.lb-img-wrap::after {
+  bottom: -32px; right: -16px;
+  border-bottom: 1px solid var(--orange);
+  border-right: 1px solid var(--orange);
+}
+
+/* side nav arrows on stage */
+.lb-prev, .lb-next {
+  position: absolute;
+  top: 50%; transform: translateY(-50%);
+  width: 56px; height: 56px;
+  border: 1px solid var(--rule);
+  background: rgba(5,5,5,.7);
+  color: var(--fg);
+  font-family: var(--mono);
+  font-size: 18px;
+  cursor: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color .3s, color .3s, background .3s, transform .3s;
+  z-index: 3;
+  backdrop-filter: blur(4px);
+}
+.lb-prev { left: 16px; }
+.lb-next { right: 16px; }
+.lb-prev:hover { border-color: var(--orange); color: var(--orange); transform: translateY(-50%) translateX(-3px); }
+.lb-next:hover { border-color: var(--orange); color: var(--orange); transform: translateY(-50%) translateX(3px); }
+.lb-prev:disabled, .lb-next:disabled { opacity: .15; pointer-events: none; }
+
+/* bottom filmstrip */
+.lb-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 40px;
+  border-top: 1px solid var(--rule);
+  overflow-x: auto;
+  flex-shrink: 0;
+  scrollbar-width: none;
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity .4s .2s ease, transform .4s .2s ease;
+}
+.lb-strip::-webkit-scrollbar { display: none; }
+#lightbox.open .lb-strip { opacity: 1; transform: none; }
+
+.lb-thumb {
+  width: 64px; height: 44px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid var(--rule);
+  opacity: .4;
+  cursor: none;
+  transition: opacity .3s, border-color .3s, transform .3s;
+  filter: grayscale(30%);
+}
+.lb-thumb:hover { opacity: .75; transform: scale(1.05); }
+.lb-thumb.active {
+  opacity: 1;
+  border-color: var(--orange);
+  filter: none;
+  transform: scale(1.08);
+}
+
+/* loading spinner */
+.lb-spinner {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 32px; height: 32px;
+  border: 1px solid var(--rule);
+  border-top-color: var(--orange);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+  opacity: 0;
+  transition: opacity .2s;
+  pointer-events: none;
+}
+.lb-spinner.show { opacity: 1; }
+@keyframes spin { to { transform: translate(-50%,-50%) rotate(360deg); } }
+
+/* metadata overlay (bottom-left of image) */
+.lb-meta-overlay {
+  position: absolute;
+  bottom: 0; left: 0;
+  padding: 20px 24px;
+  background: linear-gradient(to top, rgba(5,5,5,.8) 0%, transparent 0%);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .4s .3s;
+}
+#lightbox.open .lb-meta-overlay { opacity: 1; }
+.lb-meta-cat {
+  font-family: var(--mono);
+  font-size: 0px;
+  letter-spacing: .25em;
+  color: var(--orange);
+  text-transform: uppercase;
+}
+.lb-meta-year {
+  font-family: var(--mono);
+  font-size: 0px;
+  letter-spacing: .2em;
+  color: rgba(242,240,235,.4);
+}
+
+/* keyboard hint */
+.lb-kbd-hint {
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: .2em;
+  color: rgba(242,240,235,.18);
+  text-transform: uppercase;
+  margin-left: auto;
+  padding-right: 4px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .lb-bar { padding: 16px 20px; }
+  .lb-stage { padding: 20px 16px; }
+  .lb-prev { left: 4px; }
+  .lb-next { right: 4px; }
+  .lb-strip { padding: 12px 20px; }
+  .lb-kbd-hint { display: none; }
+  #lb-img { max-height: calc(100vh - 220px); }
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════
+     GRAIN CANVAS
+════════════════════════════════ -->
+<canvas id="grain"></canvas>
+
+<!-- ════════════════════════════════
+     LIGHTBOX
+════════════════════════════════ -->
+<div id="lightbox" role="dialog" aria-modal="true" aria-label="Image viewer">
+
+  <!-- top bar -->
+  <div class="lb-bar">
+    <div class="lb-title-wrap">
+      <span class="lb-project-name" id="lb-name">—</span>
+      <span class="lb-project-meta" id="lb-meta-bar">—</span>
+    </div>
+    <div class="lb-controls">
+      <span class="lb-kbd-hint">← → NAVIGATE &nbsp;·&nbsp; ESC CLOSE</span>
+      <button class="lb-btn" id="lb-prev-btn" aria-label="Previous">←</button>
+      <span class="lb-counter" id="lb-counter">1 / 1</span>
+      <button class="lb-btn" id="lb-next-btn" aria-label="Next">→</button>
+      <button class="lb-close" id="lb-close-btn" aria-label="Close">✕</button>
+    </div>
+  </div>
+
+  <!-- main image stage -->
+  <div class="lb-stage">
+    <div class="lb-img-wrap">
+      <div class="lb-spinner" id="lb-spinner"></div>
+      <img id="lb-img" src="" alt="">
+      <div class="lb-meta-overlay">
+        <span class="lb-meta-cat" id="lb-cat"></span>
+        <span class="lb-meta-year" id="lb-year"></span>
+      </div>
+    </div>
+    <button class="lb-prev" id="lb-prev-stage" aria-label="Previous">←</button>
+    <button class="lb-next" id="lb-next-stage" aria-label="Next">→</button>
+  </div>
+
+  <!-- filmstrip -->
+  <div class="lb-strip" id="lb-strip"></div>
+
+</div>
+
+<!-- ════════════════════════════════
+     LOADER
+════════════════════════════════ -->
+<div id="loader">
+  <div class="loader-title">
+    ALI<br><span class="outline">SAFFARI</span>
+  </div>
+  <div class="loader-meta" id="loader-meta">INITIALIZING VISUAL SYSTEM</div>
+  <div class="loader-bar-wrap">
+    <div class="loader-bar" id="loader-bar"></div>
+  </div>
+  <div class="loader-pct" id="loader-pct">0</div>
+</div>
+
+<!-- ════════════════════════════════
+     CURSOR
+════════════════════════════════ -->
+<div id="cur"></div>
+<div id="cur-ring"></div>
+
+<!-- ════════════════════════════════
+     NAV
+════════════════════════════════ -->
+<nav id="main-nav">
+  <a class="nav-logo" href="#hero">ALI <em>SAFFARI</em></a>
+  <ul class="nav-links">
+    <li><a href="#archive">Archive</a></li>
+    <li><a href="#philosophy">Philosophy</a></li>
+    <li><a href="#experience">Experience</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <div class="nav-right">
+    <span id="nav-clock"></span>
+    <div class="nav-dot"></div>
+    <button class="nav-hamburger" id="nav-hamburger" aria-label="Open menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- mobile drawer -->
+<div class="nav-drawer" id="nav-drawer" aria-hidden="true">
+  <nav>
+    <div class="nav-drawer-item">
+      <a class="nav-drawer-link" href="#archive" data-drawer-close>
+        Archive <span class="nav-drawer-arrow">↗</span>
+      </a>
+    </div>
+    <div class="nav-drawer-item">
+      <a class="nav-drawer-link" href="#philosophy" data-drawer-close>
+        Philosophy <span class="nav-drawer-arrow">↗</span>
+      </a>
+    </div>
+    <div class="nav-drawer-item">
+      <a class="nav-drawer-link" href="#experience" data-drawer-close>
+        Experience <span class="nav-drawer-arrow">↗</span>
+      </a>
+    </div>
+    <div class="nav-drawer-item">
+      <a class="nav-drawer-link" href="#contact" data-drawer-close>
+        Contact <span class="nav-drawer-arrow">↗</span>
+      </a>
+    </div>
+  </nav>
+  <div class="nav-drawer-meta">
+    <span class="meta meta-o">ARCHIVE_2089</span>
+    <span class="meta">TEHRAN · IR</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     § 1  HERO
+════════════════════════════════ -->
+<section id="hero">
+  <!-- ghost background words -->
+  <div class="hero-ghost" aria-hidden="true">
+    <span class="hero-ghost-word hgw1">EDITORIAL</span>
+    <span class="hero-ghost-word hgw2">TYPOGRAPHY</span>
+    <span class="hero-ghost-word hgw3">VISUAL</span>
+  </div>
+
+  <div class="hero-accent-line"></div>
+
+  <div class="hero-main">
+    <div class="hero-name-wrap">
+      <div class="hero-badge reveal">
+        <span class="hero-badge-dot"></span>
+        <span>ARCHIVE_2089 / NODE_04 / TEHRAN_IR</span>
+      </div>
+      <h1 class="hero-name">
+        <span class="hero-name-line1" id="hero-l1">ALI</span>
+        <span class="hero-name-line2" id="hero-l2">SAFFARI</span>
+      </h1>
+      <div class="hero-tagline reveal rd2">
+        <span class="hero-tagline-item">Brand Identity</span>
+        <span class="hero-tagline-item">Editorial Design</span>
+        <span class="hero-tagline-item">Typography</span>
+        <span class="hero-tagline-item">Illustration</span>
+      </div>
+    </div>
+
+    <div class="hero-right-col reveal rd3">
+      <div class="hero-meta-stack">
+        <span class="archive-id">ARCHIVE_2089</span>
+        <span class="meta">VISUAL COMMUNICATION SYSTEM</span>
+        <span class="meta meta-b">NODE_04</span>
+      </div>
+      <span class="hero-vertical-text">GRAPHIC DESIGN — ART DIRECTION — TYPOGRAPHY</span>
+    </div>
+  </div>
+
+  <!-- bottom strip -->
+  <div class="hero-strip reveal rd4">
+    <div class="hero-strip-progress">
+      <div class="strip-track"></div>
+      SCROLL TO ENTER
+    </div>
+    <div class="meta">GEO_IR · TEHRAN</div>
+    <div class="meta meta-o">SENIOR GRAPHIC DESIGNER</div>
+  </div>
+
+  <div class="scroll-arrow" aria-hidden="true">
+    <div class="scroll-arrow-line"></div>
+    <span class="scroll-arrow-label">SCROLL</span>
+  </div>
+</section>
+
+<!-- ════════════════════════════════
+     MARQUEE DIVIDER
+════════════════════════════════ -->
+<div class="marquee-section" aria-hidden="true">
+  <div class="marquee-track">
+    <span class="marquee-item">BRAND IDENTITY</span>
+    <span class="marquee-item accent">✦</span>
+    <span class="marquee-item">EDITORIAL DESIGN</span>
+    <span class="marquee-item accent">✦</span>
+    <span class="marquee-item">TYPOGRAPHIC SYSTEMS</span>
+    <span class="marquee-item accent">✦</span>
+    <span class="marquee-item">ART DIRECTION</span>
+    <span class="marquee-item accent">✦</span>
+    <span class="marquee-item">VISUAL COMMUNICATION</span>
+    <span class="marquee-item accent">✦</span>
+    <span class="marquee-item">ILLUSTRATION</span>
+    <span class="marquee-item accent">✦</span>
+    <!-- duplicate for seamless loop -->
+    <span class="marquee-item">BRAND IDENTITY</span>
+    <span class="marquee-item accent">✦</span>
+    <span class="marquee-item">EDITORIAL DESIGN</span>
+    <span class="marquee-item accent">✦</span>
+    <span class="marquee-item">TYPOGRAPHIC SYSTEMS</span>
+    <span class="marquee-item accent">✦</span>
+    <span class="marquee-item">ART DIRECTION</span>
+    <span class="marquee-item accent">✦</span>
+    <span class="marquee-item">VISUAL COMMUNICATION</span>
+    <span class="marquee-item accent">✦</span>
+    <span class="marquee-item">ILLUSTRATION</span>
+    <span class="marquee-item accent">✦</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     § 2  ARCHIVE
+════════════════════════════════ -->
+<section id="archive">
+  <div class="archive-head">
+    <h2 class="archive-head-title reveal">
+      SELECTED<br><span class="ao">WORKS</span>
+    </h2>
+    <div class="archive-head-right reveal rd2">
+      <span class="meta meta-o">011 PROJECTS</span>
+      <span class="meta">CYCLE_2089</span>
+      <span class="meta">TEHRAN / IR</span>
+    </div>
+  </div>
+
+  <!-- Project 01 -->
+  <article class="project reveal">
+    <div class="project-num-col">
+      <span class="project-num">[01] — 2025</span>
+    </div>
+    <div class="project-info">
+      <div>
+        <span class="project-cat">Brand Identity System</span>
+        <h3 class="project-title">RAYA v.c<br>IDENTITY</h3>
+        <span class="project-subtitle">Architecture of a Brand</span>
+        <p class="project-desc">Designed a Cohesive Visual Identity and Custom Typographic Logo for RAYA Venture Capital, Elevating Brand Authority.</p>
+      </div>
+      <div class="project-meta-row">
+        <div class="pm-cell">
+          <span class="pm-label">Year</span>
+          <span class="pm-val">2025</span>
+        </div>
+        <div class="pm-cell">
+          <span class="pm-label">Role</span>
+          <span class="pm-val">Art Director</span>
+        </div>
+        <div class="pm-cell">
+          <span class="pm-label">Client</span>
+          <span class="pm-val">RAYA Venture Capital</span>
+        </div>
+      </div>
+    </div>
+    <div class="project-img-col">
+      <div class="art-plate plate-01" data-project="RAYA V.C Identity">
+        <!-- ── COVER IMAGE (always visible) ── -->
+        <!-- ↓↓↓ REPLACE ↓↓↓ -->
+        <img src="raya 01.jpg" alt="RAYA V.C Identity — Image 1"
+             style="width:100%;height:100%;object-fit:cover;display:block;"
+             data-gallery="true" data-title="RAYA V.C Identity — 01"
+             data-category="Brand Identity System" data-year="2025">
+        <!-- ↑↑↑ REPLACE ↑↑↑ -->
+
+        <!-- ── EXTRA IMAGE 2 ── -->
+        <!-- ↓↓↓ REPLACE ↓↓↓ -->
+        <img src="raya 02.jpg" alt="RAYA V.C Identity — Image 2"
+             class="plate-extra-img"
+             data-gallery="true" data-title="RAYA V.C Identity — 02"
+             data-category="Brand Identity System" data-year="2025">
+        <!-- ↑↑↑ REPLACE: e.g. src="images/forma-02.jpg" ↑↑↑ -->
+
+        <!-- ── EXTRA IMAGE 3 ── -->
+        <!-- ↓↓↓ REPLACE ↓↓↓ -->
+        <img src="raya 03.jpg" alt="RAYA V.C Identity — Image 3"
+             class="plate-extra-img"
+             data-gallery="true" data-title="RAYA V.C Identity — 03"
+             data-category="Brand Identity System" data-year="2025">
+        <!-- ↑↑↑ REPLACE: e.g. src="images/forma-03.jpg" ↑↑↑ -->
+
+        <span class="plate-img-count">3 IMAGES</span>
+        <div class="plate-corner"></div>
+        <div class="plate-corner-bl"></div>
+        <span class="plate-label">IMG_FORMA_01.RAW</span>
+        <span class="plate-click-hint">VIEW GALLERY ↗</span>
+      </div>
+    </div>
+  </article>
+
+  <!-- Project 02 -->
+  <article class="project reveal rd1">
+    <div class="project-num-col">
+      <span class="project-num">[02] — 2024</span>
+    </div>
+    <div class="project-info">
+      <div>
+        <span class="project-cat">‌‌Book Design</span>
+        <h3 class="project-title">how to stop<br>being toxic</h3>
+        <span class="project-subtitle">198-Pages</span>
+        <p class="project-desc">Book Design and Layout for “How to Stop Being Toxic” Published by Ketabrah. Includes Custom Cover Design and a Reader-Centric Interior for a Seamless Experience.</p>
+      </div>
+      <div class="project-meta-row">
+        <div class="pm-cell">
+          <span class="pm-label">Year</span>
+          <span class="pm-val">2024</span>
+        </div>
+        <div class="pm-cell">
+          <span class="pm-label">Role</span>
+          <span class="pm-val">Lead Designer</span>
+        </div>
+        <div class="pm-cell">
+          <span class="pm-label">Client</span>
+          <span class="pm-val">Ketabrah</span>
+        </div>
+      </div>
+    </div>
+    <div class="project-img-col">
+      <div class="art-plate plate-02" data-project="How to Stop Being Toxic">
+        <!-- ── COVER IMAGE (always visible) ── -->
+        <!-- ↓↓↓ REPLACE ↓↓↓ -->
+        <img src="book 01.jpg" alt="How to Stop Being Toxic — Image 1"
+             style="width:100%;height:100%;object-fit:cover;display:block;"
+             data-gallery="true" data-title="How to Stop Being Toxic — 01"
+             data-category="Book Design" data-year="2024">
+        <!-- ↑↑↑ REPLACE ↑↑↑ -->
+
+        <!-- ── EXTRA IMAGE 2 ── -->
+        <!-- ↓↓↓ REPLACE ↓↓↓ -->
+        <img src="book 02.jpg" alt="How to Stop Being Toxic — Image 2"
+             class="plate-extra-img"
+             data-gallery="true" data-title="How to Stop Being Toxic — 02"
+             data-category="Book Design" data-year="2024">
+        <!-- ↑↑↑ REPLACE: e.g. src="images/typeset-02.jpg" ↑↑↑ -->
+
+        <!-- ── EXTRA IMAGE 3 ── -->
+        <!-- ↓↓↓ REPLACE ↓↓↓ -->
+        <img src="book 03.jpg" alt="How to Stop Being Toxic — Image 3"
+             class="plate-extra-img"
+             data-gallery="true" data-title="How to Stop Being Toxic — 03"
+             data-category="Book Design" data-year="2024">
+        <!-- ↑↑↑ REPLACE: e.g. src="images/typeset-03.jpg" ↑↑↑ -->
+
+        <span class="plate-img-count">3 IMAGES</span>
+        <div class="plate-corner"></div>
+        <div class="plate-corner-bl"></div>
+        <span class="plate-label">IMG_TYPESET_02.RAW</span>
+        <span class="plate-click-hint">VIEW GALLERY ↗</span>
+      </div>
+    </div>
+  </article>
+
+  <!-- Project 03 -->
+  <article class="project reveal rd2">
+    <div class="project-num-col">
+      <span class="project-num">[03] — 2026</span>
+    </div>
+    <div class="project-info">
+      <div>
+        <span class="project-cat">editorial design</span>
+        <h3 class="project-title">asa<br>magazine</h3>
+        <span class="project-subtitle">EdTech Magazine</span>
+        <p class="project-desc">Editorial Design and Layout for a 12-Issue “ASA Magazine” Series Commissioned by Aroun Agency, Featuring Striking Covers and Reader-Centric Interiors.</p>
+      </div>
+      <div class="project-meta-row">
+        <div class="pm-cell">
+          <span class="pm-label">Year</span>
+          <span class="pm-val">2026</span>
+        </div>
+        <div class="pm-cell">
+          <span class="pm-label">Role</span>
+          <span class="pm-val">Art Director</span>
+        </div>
+        <div class="pm-cell">
+          <span class="pm-label">Client</span>
+          <span class="pm-val">Aroun Agency</span>
+        </div>
+      </div>
+    </div>
+    <div class="project-img-col">
+      <div class="art-plate plate-03" data-project="Asa Magazine">
+        <!-- ── COVER IMAGE (always visible) ── -->
+        <!-- ↓↓↓ REPLACE ↓↓↓ -->
+        <img src="asa 0.jpg" alt="Asa Magazine — Image 1"
+             style="width:100%;height:100%;object-fit:cover;display:block;"
+             data-gallery="true" data-title="Asa Magazine — 01"
+             data-category="Editorial Design / Magazine" data-year="2026">
+        <!-- ↑↑↑ REPLACE ↑↑↑ -->
+
+        <!-- ── EXTRA IMAGE 2 ── -->
+        <!-- ↓↓↓ REPLACE ↓↓↓ -->
+        <img src="asa 01.jpg" alt="Asa Magazine — Image 2"
+             class="plate-extra-img"
+             data-gallery="true" data-title="Asa Magazine — 02"
+             data-category="Editorial Design / Magazine" data-year="2026">
+        <!-- ↑↑↑ REPLACE: e.g. src="images/signal-02.jpg" ↑↑↑ -->
+
+         <!-- ── EXTRA IMAGE 3 ── -->
+        <!-- ↓↓↓ REPLACE ↓↓↓ -->
+        <img src="asa 02.jpg" alt="Asa Magazine — Image 3"
+             class="plate-extra-img"
+             data-gallery="true" data-title="Asa Magazine — 03"
+             data-category="Editorial Design / Magazine" data-year="2026">
+        <!-- ↑↑↑ REPLACE: e.g. src="images/signal-02.jpg" ↑↑↑ -->
+
+         <!-- ── EXTRA IMAGE 4 ── -->
+        <!-- ↓↓↓ REPLACE ↓↓↓ -->
+        <img src="asa 03.jpg" alt="Asa Magazine — Image 4"
+             class="plate-extra-img"
+             data-gallery="true" data-title="Asa Magazine — 04"
+             data-category="Editorial Design / Magazine" data-year="2026">
+        <!-- ↑↑↑ REPLACE: e.g. src="images/signal-02.jpg" ↑↑↑ -->
+
+         <!-- ── EXTRA IMAGE 5 ── -->
+        <!-- ↓↓↓ REPLACE ↓↓↓ -->
+        <img src="asa 04.jpg" alt="Asa Magazine — Image 5"
+             class="plate-extra-img"
+             data-gallery="true" data-title="Asa Magazine — 05"
+             data-category="Editorial Design / Magazine" data-year="2026">
+        <!-- ↑↑↑ REPLACE: e.g. src="images/signal-02.jpg" ↑↑↑ -->
+
+        <span class="plate-img-count">5 IMAGES</span>
+        <div class="plate-corner"></div>
+        <div class="plate-corner-bl"></div>
+        <span class="plate-label">IMG_SIGNAL_03.RAW</span>
+        <span class="plate-click-hint">VIEW GALLERY ↗</span>
+      </div>
+    </div>
+  </article>
+
+  <!-- Project 04 -->
+  <article class="project reveal rd3">
+    <div class="project-num-col">
+      <span class="project-num">[04] — 2023</span>
+    </div>
+    <div class="project-info">
+      <div>
+        <span class="project-cat">Catalog Design</span>
+        <h3 class="project-title">academy<br>catalog</h3>
+        <span class="project-subtitle">Official Catalog</span>
+        <p class="project-desc">Editorial Design and Layout for Hayaiee Acting Academy’s Official Catalog, Featuring a Custom Cover and High-End, Visual-Impact Layout.</p>
+      </div>
+      <div class="project-meta-row">
+        <div class="pm-cell">
+          <span class="pm-label">Year</span>
+          <span class="pm-val">2023</span>
+        </div>
+        <div class="pm-cell">
+          <span class="pm-label">Role</span>
+          <span class="pm-val">Graphic Designer</span>
+        </div>
+        <div class="pm-cell">
+          <span class="pm-label">Client</span>
+          <span class="pm-val">Hayaiee Academy</span>
+        </div>
+      </div>
+    </div>
+    <div class="project-img-col">
+      <div class="art-plate plate-04" data-project="khatt-system">
+        <!-- ── COVER IMAGE (always visible) ── -->
+        <!-- ↓↓↓ REPLACE ↓↓↓ -->
+        <img src="academy 01.jpg" alt="Academy Catalog — Image 1"
+             style="width:100%;height:100%;object-fit:cover;display:block;"
+             data-gallery="true" data-title="Academy Catalog — 01"
+             data-category="Catalog Design" data-year="2023">
+        <!-- ↑↑↑ REPLACE ↑↑↑ -->
+
+        <!-- ── EXTRA IMAGE 2 ── -->
+        <!-- ↓↓↓ REPLACE ↓↓↓ -->
+        <img src="academy 02.jpg" alt="Academy Catalog — Image 2"
+             class="plate-extra-img"
+             data-gallery="true" data-title="Academy Catalog — 02"
+             data-category="Catalog Design" data-year="2023">
+        <!-- ↑↑↑ REPLACE: e.g. src="images/khatt-02.jpg" ↑↑↑ -->
+
+        <!-- ── EXTRA IMAGE 3 ── -->
+        <!-- ↓↓↓ REPLACE ↓↓↓ -->
+        <img src="academy 03.jpg" alt="Academy Catalog — Image 3"
+             class="plate-extra-img"
+             data-gallery="true" data-title="Academy Catalog — 03"
+             data-category="Catalog Design" data-year="2023">
+        <!-- ↑↑↑ REPLACE: e.g. src="images/khatt-03.jpg" ↑↑↑ -->
+
+        <span class="plate-img-count">3 IMAGES</span>
+        <div class="plate-corner"></div>
+        <div class="plate-corner-bl"></div>
+        <span class="plate-label">IMG_KHATT_04.RAW</span>
+        <span class="plate-click-hint">VIEW GALLERY ↗</span>
+      </div>
+    </div>
+  </article>
+
+  <!-- ─────────────────────────────────────────────
+       Promotion Poster — ADD YOUR OWN CONTENT BELOW
+  ───────────────────────────────────────────── -->
+  <article class="project reveal">
+    <div class="project-num-col">
+      <span class="project-num">[05] — 2024</span>  <!-- ← change year -->
+    </div>
+    <div class="project-info">
+      <div>
+        <span class="project-cat">Poster Design</span>            <!-- ← e.g. Poster Design -->
+        <h3 class="project-title"> Promotion<br>Poster</h3>          <!-- ← your project name -->
+        <span class="project-subtitle">Book Promotion Posters</span> <!-- ← short tagline -->
+        <p class="project-desc">Poster Design and Illustration for Ketabrah, Featuring Bespoke Visual Concepts Based on In-Depth Analysis of Book Themes and Narratives.</p>
+      </div>
+      <div class="project-meta-row">
+        <div class="pm-cell">
+          <span class="pm-label">Year</span>
+          <span class="pm-val">2024</span>           <!-- ← year -->
+        </div>
+        <div class="pm-cell">
+          <span class="pm-label">Role</span>
+          <span class="pm-val">Designer</span>       <!-- ← your role -->
+        </div>
+        <div class="pm-cell">
+          <span class="pm-label">Client</span>
+          <span class="pm-val">Ketabrah</span>  <!-- ← category -->
+        </div>
+      </div>
+    </div>
+    <div class="project-img-col">
+      <div class="art-plate" data-project="project-05">
+        <!-- ── COVER IMAGE ── -->
+        <!-- ↓↓↓ REPLACE ↓↓↓ -->
+        <img src="promotion 1.jpg" alt="Promotion Poster — Image 1"
+             style="width:100%;height:100%;object-fit:cover;display:block;"
+             data-gallery="true" data-title="Promotion Poster — 01"
+             data-category="Promotion Poster Design" data-year="2024">
+        <!-- ── EXTRA IMAGE 2 ── -->
+        <img src="promotion 2.jpg" alt="Promotion Poster — Image 2"
+             class="plate-extra-img"
+             data-gallery="true" data-title="Promotion Poster — 02"
+             data-category="Promotion Poster Design" data-year="2024">
+        <!-- ── EXTRA IMAGE 3 ── -->
+        <img src="promotion 3.jpg" alt="Promotion Poster — Image 3"
+             class="plate-extra-img"
+             data-gallery="true" data-title="Promotion Poster — 03"
+             data-category="Promotion Poster Design" data-year="2024">
+             <!-- ── EXTRA IMAGE 3 ── -->
+        <img src="promotion 4.jpg" alt="Promotion Poster — Image 4"
+             class="plate-extra-img"
+             data-gallery="true" data-title="Promotion Poster — 04"
+             data-category="Promotion Poster Design" data-year="2024">
+
+        <span class="plate-img-count">4 IMAGES</span>
+        <div class="plate-corner"></div>
+        <div class="plate-corner-bl"></div>
+        <span class="plate-label">IMG_PROJECT_05.RAW</span>
+        <span class="plate-click-hint">VIEW GALLERY ↗</span>
+      </div>
+    </div>
+  </article>
+
+  <!-- ─────────────────────────────────────────────
+       Poster Design — ADD YOUR OWN CONTENT BELOW
+  ───────────────────────────────────────────── -->
+  <article class="project reveal rd1">
+    <div class="project-num-col">
+      <span class="project-num">[06] — 2023</span>
+    </div>
+    <div class="project-info">
+      <div>
+        <span class="project-cat">Poster Design</span>
+        <h3 class="project-title">POSTER<br>DESIGN</h3>
+        <span class="project-subtitle">Theater Poster Design</span>
+        <p class="project-desc">Concept-Driven Poster Design for Theater Productions, Capturing the Narrative and Emotional Tone of Each Performance.</p>
+      </div>
+      <div class="project-meta-row">
+        <div class="pm-cell">
+          <span class="pm-label">Year</span>
+          <span class="pm-val">2023</span>
+        </div>
+        <div class="pm-cell">
+          <span class="pm-label">Role</span>
+          <span class="pm-val">Designer</span>
+        </div>
+        <div class="pm-cell">
+          <span class="pm-label">Client</span>
+          <span class="pm-val">Independent Client</span>
+        </div>
+      </div>
+    </div>
+    <div class="project-img-col">
+      <div class="art-plate" data-project="project-06">
+        <!-- ── COVER IMAGE ── -->
+        <!-- ↓↓↓ REPLACE ↓↓↓ -->
+        <img src="poster 1.jpg" alt="Poster Design — Image 1"
+             style="width:100%;height:100%;object-fit:cover;display:block;"
+             data-gallery="true" data-title="Poster Design — 01"
+             data-category="Poster Design" data-year="2023">
+        <!-- ── EXTRA IMAGE 2 ── -->
+        <img src="poster 2.jpg" alt="Poster Design — Image 2"
+             class="plate-extra-img"
+             data-gallery="true" data-title="Poster Design — 02"
+             data-category="Poster Design" data-year="2023">
+        
+             
+        <span class="plate-img-count">2 IMAGES</span>
+        <div class="plate-corner"></div>
+        <div class="plate-corner-bl"></div>
+        <span class="plate-label">IMG_PROJECT_06.RAW</span>
+        <span class="plate-click-hint">VIEW GALLERY ↗</span>
+      </div>
+    </div>
+  </article>
+
+  <!-- ─────────────────────────────────────────────
+       Project 07 — ADD YOUR OWN CONTENT BELOW
+  ───────────────────────────────────────────── -->
+  <article class="project reveal rd2">
+    <div class="project-num-col">
+      <span class="project-num">[07] — 2024</span>
+    </div>
+    <div class="project-info">
+      <div>
+        <span class="project-cat">Social Media</span>
+        <h3 class="project-title">Post<br>Design</h3>
+        <span class="project-subtitle">Instagram Post Design</span>
+        <p class="project-desc">Social Media Visual Design for Ketabrah, Developing a Cohesive Visual Language and Digital Identity for Enhanced User Engagement.</p>
+      </div>
+      <div class="project-meta-row">
+        <div class="pm-cell">
+          <span class="pm-label">Year</span>
+          <span class="pm-val">2024</span>
+        </div>
+        <div class="pm-cell">
+          <span class="pm-label">Role</span>
+          <span class="pm-val">Designer</span>
+        </div>
+        <div class="pm-cell">
+          <span class="pm-label">Client</span>
+          <span class="pm-val">Ketabrah</span>
+        </div>
+      </div>
+    </div>
+    <div class="project-img-col">
+      <div class="art-plate" data-project="project-07">
+        <!-- ── COVER IMAGE ── -->
+        <!-- ↓↓↓ REPLACE ↓↓↓ -->
+        <img src="social 1.jpg" alt="Project 07 — Image 1"
+             style="width:100%;height:100%;object-fit:cover;display:block;"
+             data-gallery="true" data-title="Promotion Poster — 01"
+             data-category="Instagram Post Design" data-year="2024">
+        <!-- ── EXTRA IMAGE 2 ── -->
+        <img src="social 2.jpg" alt="Project 07 — Image 2"
+             class="plate-extra-img"
+             data-gallery="true" data-title="Promotion Poster — 02"
+             data-category="Instagram Post Design" data-year="2024">
+        
+        <span class="plate-img-count">2 IMAGES</span>
+        <div class="plate-corner"></div>
+        <div class="plate-corner-bl"></div>
+        <span class="plate-label">IMG_PROJECT_07.RAW</span>
+        <span class="plate-click-hint">VIEW GALLERY ↗</span>
+      </div>
+    </div>
+  </article>
+
+  <!-- ─────────────────────────────────────────────
+       Project 08 — ADD YOUR OWN CONTENT BELOW
+  ───────────────────────────────────────────── -->
+  <article class="project reveal rd3">
+    <div class="project-num-col">
+      <span class="project-num">[08] — 2024</span>
+    </div>
+    <div class="project-info">
+      <div>
+        <span class="project-cat">Character Design</span>
+        <h3 class="project-title">Character<br>Illustration</h3>
+        <span class="project-subtitle">Character Design for Ketabrah App</span>
+        <p class="project-desc">Custom Character Design for Ketabrah’s Category Content Blocks, Adding a Playful and Humanized Layer to Genre Exploration.</p>
+      </div>
+      <div class="project-meta-row">
+        <div class="pm-cell">
+          <span class="pm-label">Year</span>
+          <span class="pm-val">2024</span>
+        </div>
+        <div class="pm-cell">
+          <span class="pm-label">Role</span>
+          <span class="pm-val">Designer</span>
+        </div>
+        <div class="pm-cell">
+          <span class="pm-label">Client</span>
+          <span class="pm-val">Ketabrah</span>
+        </div>
+      </div>
+    </div>
+    <div class="project-img-col">
+      <div class="art-plate" data-project="project-08">
+        <!-- ── COVER IMAGE ── -->
+        <!-- ↓↓↓ REPLACE ↓↓↓ -->
+        <img src="character 1.jpg" alt="Project 08 — Image 1"
+             style="width:100%;height:100%;object-fit:cover;display:block;"
+             data-gallery="true" data-title="Character illustration — 01"
+             data-category="Character Designy" data-year="2024">
+        <!-- ── EXTRA IMAGE 2 ── -->
+        <img src="character 2.jpg" alt="Project 08 — Image 2"
+             class="plate-extra-img"
+             data-gallery="true" data-title="Character illustration — 02"
+             data-category="Character Design" data-year="2024">
+        <!-- ── EXTRA IMAGE 3 ── -->
+        <img src="character 3.jpg" alt="Project 08 — Image 3"
+             class="plate-extra-img"
+             data-gallery="true" data-title="Character illustration — 03"
+             data-category="Character Design" data-year="2024">
+        <span class="plate-img-count">3 IMAGES</span>
+        <div class="plate-corner"></div>
+        <div class="plate-corner-bl"></div>
+        <span class="plate-label">IMG_PROJECT_08.RAW</span>
+        <span class="plate-click-hint">VIEW GALLERY ↗</span>
+      </div>
+    </div>
+  </article>
+
+</section>
+<!-- ─────────────────────────────────────────────
+       Project 09 — ADD YOUR OWN CONTENT BELOW
+  ───────────────────────────────────────────── -->
+  <article class="project reveal rd3">
+    <div class="project-num-col">
+      <span class="project-num">[09] — 0000</span>
+    </div>
+    <div class="project-info">
+      <div>
+        <span class="project-cat">Concept Illustration</span>
+        <h3 class="project-title">Digital<br>Illustration</h3>
+        <span class="project-subtitle">Visual Explorations</span>
+        <p class="project-desc">Personal Illustration Series, A Conceptual Exploration of Narrative-Driven Compositions, Color Theory, and Evolving Artistic Styles.</p>
+      </div>
+      <div class="project-meta-row">
+        <div class="pm-cell">
+          <span class="pm-label">Year</span>
+          <span class="pm-val">0000</span>
+        </div>
+        <div class="pm-cell">
+          <span class="pm-label">Role</span>
+          <span class="pm-val">Designer</span>
+        </div>
+        <div class="pm-cell">
+          <span class="pm-label">Client</span>
+          <span class="pm-val">Personal Exploration</span>
+        </div>
+      </div>
+    </div>
+    <div class="project-img-col">
+      <div class="art-plate" data-project="project-08">
+        <!-- ── COVER IMAGE ── -->
+        <!-- ↓↓↓ REPLACE ↓↓↓ -->
+        <img src="new 1.jpg" alt="Project 08 — Image 1"
+             style="width:100%;height:100%;object-fit:cover;display:block;"
+             data-gallery="true" data-title="Digital Illustration — 01"
+             data-category="Concept Illustration" data-year="0000">
+        <!-- ── EXTRA IMAGE 2 ── -->
+        <img src="new 2.jpg" alt="Project 08 — Image 2"
+             class="plate-extra-img"
+             data-gallery="true" data-title="Digital Illustration — 02"
+             data-category="Concept Illustration" data-year="0000">
+        <!-- ── EXTRA IMAGE 3 ── -->
+        <img src="new 3.jpg" alt="Project 08 — Image 3"
+             class="plate-extra-img"
+             data-gallery="true" data-title="Digital Illustration — 03"
+             data-category="Concept Illustration" data-year="0000">
+        <span class="plate-img-count">3 IMAGES</span>
+        <div class="plate-corner"></div>
+        <div class="plate-corner-bl"></div>
+        <span class="plate-label">IMG_PROJECT_08.RAW</span>
+        <span class="plate-click-hint">VIEW GALLERY ↗</span>
+      </div>
+    </div>
+  </article>
+
+</section>
+<!-- ─────────────────────────────────────────────
+       Project 10 — ADD YOUR OWN CONTENT BELOW
+  ───────────────────────────────────────────── -->
+  <article class="project reveal rd3">
+    <div class="project-num-col">
+      <span class="project-num">[10] — 0000</span>
+    </div>
+    <div class="project-info">
+      <div>
+        <span class="project-cat">Typography Design</span>
+        <h3 class="project-title">Typography<br>Explorations</h3>
+        <span class="project-subtitle">Personal Typography Studies</span>
+        <p class="project-desc">Personal Series of Persian and English Typography Experiments Focused on Form, Composition, and Visual Expression.</p>
+      </div>
+      <div class="project-meta-row">
+        <div class="pm-cell">
+          <span class="pm-label">Year</span>
+          <span class="pm-val">0000</span>
+        </div>
+        <div class="pm-cell">
+          <span class="pm-label">Role</span>
+          <span class="pm-val">Designer</span>
+        </div>
+        <div class="pm-cell">
+          <span class="pm-label">Client</span>
+          <span class="pm-val">Personal Exploration</span>
+        </div>
+      </div>
+    </div>
+    <div class="project-img-col">
+      <div class="art-plate" data-project="project-08">
+        <!-- ── COVER IMAGE ── -->
+        <!-- ↓↓↓ REPLACE ↓↓↓ -->
+        <img src="type 1.jpg" alt="Project 08 — Image 1"
+             style="width:100%;height:100%;object-fit:cover;display:block;"
+             data-gallery="true" data-title="Typography Explorations — 01"
+             data-category="Typography Design" data-year="0000">
+        <!-- ── EXTRA IMAGE 2 ── -->
+        <img src="type 2.jpg" alt="Project 08 — Image 2"
+             class="plate-extra-img"
+             data-gallery="true" data-title="Typography Explorations — 02"
+             data-category="Typography Design" data-year="0000">
+        <!-- ── EXTRA IMAGE 3 ── -->
+        <img src="type 3.jpg" alt="Project 08 — Image 3"
+             class="plate-extra-img"
+             data-gallery="true" data-title="Typography Explorations — 03"
+             data-category="Typography Design" data-year="0000">
+        <span class="plate-img-count">3 IMAGES</span>
+        <div class="plate-corner"></div>
+        <div class="plate-corner-bl"></div>
+        <span class="plate-label">IMG_PROJECT_08.RAW</span>
+        <span class="plate-click-hint">VIEW GALLERY ↗</span>
+      </div>
+    </div>
+  </article>
+
+</section>
+<!-- ─────────────────────────────────────────────
+       Project 11 — ADD YOUR OWN CONTENT BELOW
+  ───────────────────────────────────────────── -->
+  <article class="project reveal rd3">
+    <div class="project-num-col">
+      <span class="project-num">[11] — 0000</span>
+    </div>
+    <div class="project-info">
+      <div>
+        <span class="project-cat">Design Thinking</span>
+        <h3 class="project-title">Idea<br>sketching</h3>
+        <span class="project-subtitle">Conceptual Sketches</span>
+        <p class="project-desc">Conceptual Sketching and Ideation, Translating Complex Ideas into Minimal and Clean Visual Forms.</p>
+      </div>
+      <div class="project-meta-row">
+        <div class="pm-cell">
+          <span class="pm-label">Year</span>
+          <span class="pm-val">0000</span>
+        </div>
+        <div class="pm-cell">
+          <span class="pm-label">Role</span>
+          <span class="pm-val">Designer</span>
+        </div>
+        <div class="pm-cell">
+          <span class="pm-label">Client</span>
+          <span class="pm-val">Personal Exploration</span>
+        </div>
+      </div>
+    </div>
+    <div class="project-img-col">
+      <div class="art-plate" data-project="project-08">
+        <!-- ── COVER IMAGE ── -->
+        <!-- ↓↓↓ REPLACE ↓↓↓ -->
+        <img src="sketch 1.jpg" alt="Project 08 — Image 1"
+             style="width:100%;height:100%;object-fit:cover;display:block;"
+             data-gallery="true" data-title="Idea Sketching — 01"
+             data-category="Design Thinking" data-year="0000">
+        <!-- ── EXTRA IMAGE 2 ── -->
+        <img src="sketch 2.jpg" alt="Project 08 — Image 2"
+             class="plate-extra-img"
+             data-gallery="true" data-title="Idea Sketching — 02"
+             data-category="Design Thinking" data-year="0000">
+        <!-- ── EXTRA IMAGE 3 ── -->
+        <img src="sketch 3.jpg" alt="Project 08 — Image 3"
+             class="plate-extra-img"
+             data-gallery="true" data-title="Idea Sketching — 03"
+             data-category="Design Thinking" data-year="0000">
+        <span class="plate-img-count">3 IMAGES</span>
+        <div class="plate-corner"></div>
+        <div class="plate-corner-bl"></div>
+        <span class="plate-label">IMG_PROJECT_08.RAW</span>
+        <span class="plate-click-hint">VIEW GALLERY ↗</span>
+      </div>
+    </div>
+  </article>
+
+</section>
+
+<!-- ════════════════════════════════
+     § 3  PHILOSOPHY
+════════════════════════════════ -->
+<section id="philosophy">
+  <div class="phil-bg" aria-hidden="true">WHY</div>
+
+  <div class="phil-grid">
+    <div class="reveal">
+      <div class="section-rule">
+        <span class="section-rule-label">PHILOSOPHY / NODE_04</span>
+      </div>
+      <div class="phil-statement">
+        DESIGN IS<br>A SYSTEM<br>OF <span class="po">COM-</span><br><span class="po">MUNICA-</span><br><span class="pb">TION.</span>
+      </div>
+      <div class="phil-number" aria-hidden="true">04</div>
+    </div>
+
+    <div class="phil-right reveal rd2">
+      <p class="phil-intro">
+        "Every mark made is a decision about power, space, and meaning."
+      </p>
+      <p class="phil-body">
+        Graphic Designer Specializing in <strong> Branding, Editorial, and Visual Communication.
+        </strong> I Bridge the Gap Between Strategy and Aesthetics, Crafting Cohesive Visual Systems Across Print and Digital Platforms.
+        From Complex Editorial Layouts to Immersive Brand Identities, My Focus Remains on <strong> Clarity, Functional Typography, and Meaningful Storytelling.
+        <br><br>
+        </strong><strong>
+        <br><br>
+      
+      </p>
+      <div class="phil-principles">
+        <div class="principle">
+          <span class="principle-num">01</span>
+          <span class="principle-text">Typographic precision is non-negotiable</span>
+        </div>
+        <div class="principle">
+          <span class="principle-num">02</span>
+          <span class="principle-text">Negative space is the loudest voice</span>
+        </div>
+        <div class="principle">
+          <span class="principle-num">03</span>
+          <span class="principle-text">Conceptual clarity before aesthetics</span>
+        </div>
+        <div class="principle">
+          <span class="principle-num">04</span>
+          <span class="principle-text">Cultural context shapes visual grammar</span>
+        </div>
+    
+      
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════
+     § 4  EXPERIENCE
+════════════════════════════════ -->
+<section id="experience">
+  <div class="exp-top">
+    <h2 class="exp-heading reveal">
+      CAREER<br><span class="eo">RECORD</span>
+    </h2>
+    <p class="exp-intro reveal rd2">
+      Twelve Years of Crafting Impactful Visual Systems Across Identity, Editorial, and Spatial Design.
+    </p>
+  </div>
+
+  <div class="exp-timeline">
+
+    <div class="exp-item reveal">
+      <div class="exp-left">
+        <div class="exp-period">2025 — 2026</div>
+        <span class="exp-status"></span>
+      </div>
+      <div class="exp-mid">
+        <h3 class="exp-role">SENIOR <br>GRAPHIC DESIGNER</h3>
+        <span class="exp-co">Aroun PR Agency</span>
+        <p class="exp-desc"></p>
+      </div>
+      <div class="exp-right">
+        <span class="exp-tag">Editorial Design</span>
+        <span class="exp-tag">Catalog Design</span>
+        <span class="exp-tag">...</span>
+      </div>
+    </div>
+
+    <div class="exp-item reveal rd1">
+      <div class="exp-left">
+        <div class="exp-period">2024 — 2025</div>
+      </div>
+      <div class="exp-mid">
+        <h3 class="exp-role">GRAPHIC<br>DESIGNER</h3>
+        <span class="exp-co">Ketabrah</span>
+        <p class="exp-desc"></p>
+      </div>
+      <div class="exp-right">
+        <span class="exp-tag">Book Design</span>
+        <span class="exp-tag">Book Cover Design</span>
+        <span class="exp-tag">Poster Illustration</span>
+        <span class="exp-tag">...</span>
+      </div>
+    </div>
+
+    <div class="exp-item reveal rd2">
+      <div class="exp-left">
+        <div class="exp-period">2023 — 2024</div>
+      </div>
+      <div class="exp-mid">
+        <h3 class="exp-role">SENIOR<br>GRAPHIC DESIGNER</h3>
+        <span class="exp-co">Hayaiee Acting Academy</span>
+        <p class="exp-desc"></p>
+      </div>
+      <div class="exp-right">
+        <span class="exp-tag">Catalog</span>
+        <span class="exp-tag">Poster</span>
+        <span class="exp-tag">Illustration</span>
+        <span class="exp-tag">...</span>
+      </div>
+    </div>
+
+    <div class="exp-item reveal rd3">
+      <div class="exp-left">
+        <div class="exp-period">2020 — 2023</div>
+      </div>
+      <div class="exp-mid">
+        <h3 class="exp-role">VISUAL<br>DESIGNER</h3>
+        <span class="exp-co">Independent Practice</span>
+        <p class="exp-desc"></p>
+      </div>
+      <div class="exp-right">
+        <span class="exp-tag">Typography</span>
+        <span class="exp-tag">Poster</span>
+        <span class="exp-tag">Illustration</span>
+        <span class="exp-tag">...</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ════════════════════════════════
+     STATEMENT STRIP
+════════════════════════════════ -->
+<div id="statement-strip">
+    <p class="strip-text">
+    ⠁  ⠇  ⠊⠀   ⠎  ⠁  ⠋  ⠋  ⠁  ⠗  ⠊
+    </p>
+    
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     § 5  CONTACT
+════════════════════════════════ -->
+<section id="contact">
+  <div class="contact-bg" aria-hidden="true">2089</div>
+
+  <div class="contact-eyebrow reveal">START A CONVERSATION</div>
+
+  <h2 class="contact-hl reveal rd1">
+    <span>LET'S BUILD</span><br>
+    <span class="co">SOMETHING</span><br>
+    <span class="coo">MEANINGFUL</span>
+  </h2>
+
+  <div class="contact-body">
+    <div class="contact-email-wrap reveal">
+      <span class="contact-email-label">Primary Contact</span>
+      <a class="contact-email" href="mailto:saffari.ali1@gmail.com">saffari.ali1@gmail.com</a>
+      <div class="contact-avail">
+        <div class="avail-dot"></div>
+        Available
+      </div>
+    </div>
+
+    <div class="reveal rd2">
+      <ul class="social-stack">
+        <li class="soc-item">
+          <a class="soc-link" href="" target="_blank" rel="noopener">
+            <span class="soc-name">935-406-9242</span>
+            <div class="soc-meta">
+              <span class="soc-handle">alisaffari</span>
+              <span class="soc-arrow">↗</span>
+            </div>
+          </a>
+        </li>
+        <li class="soc-item">
+          <a class="soc-link" href="https://www.instagram.com/alisaffari.jpg?igsh=MTRrYjdwNTA1M2x3cQ%3D%3D&utm_source=qr" target="_blank" rel="noopener">
+            <span class="soc-name">INSTAGRAM</span>
+            <div class="soc-meta">
+              <span class="soc-handle">@alisaffari.jpg</span>
+              <span class="soc-arrow">↗</span>
+            </div>
+          </a>
+        </li>
+        <li class="soc-item">
+          <a class="soc-link" href="https://www.linkedin.com/in/ali-saffari-725b7b318?utm_source=share_via&utm_content=profile&utm_medium=member_ios" target="_blank" rel="noopener">
+            <span class="soc-name">LINKEDIN</span>
+            <div class="soc-meta">
+              <span class="soc-handle">/in/ali-saffari</span>
+              <span class="soc-arrow">↗</span>
+            </div>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════
+     FOOTER
+════════════════════════════════ -->
+<footer>
+  <span class="meta">© PORTFOLIO_2089 · ALI SAFFARI</span>
+  <div class="footer-mid">
+    <span class="footer-mark">A.S</span>
+  </div>
+  <div class="footer-right">
+    <span class="meta">NODE_04 · TEHRAN · IR</span>
+  </div>
+</footer>
+
+<!-- ════════════════════════════════
+     SCRIPTS
+════════════════════════════════ -->
+<script>
+/* ─────────────────────────────────
+   GRAIN CANVAS — throttled, half-res
+───────────────────────────────── */
+(function() {
+  const canvas = document.getElementById('grain');
+  const ctx = canvas.getContext('2d');
+  let w, h, lastDraw = 0;
+  const FPS = 12; // redraws per second — invisible above ~8fps
+  const INTERVAL = 1000 / FPS;
+
+  function resize() {
+    // draw at half resolution, CSS scales it up — same look, 4x fewer pixels
+    w = canvas.width  = Math.ceil(window.innerWidth  / 2);
+    h = canvas.height = Math.ceil(window.innerHeight / 2);
+    canvas.style.width  = window.innerWidth  + 'px';
+    canvas.style.height = window.innerHeight + 'px';
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // pre-allocate once, reuse every frame
+  let imageData = null;
+  function drawGrain(ts) {
+    requestAnimationFrame(drawGrain);
+    if (ts - lastDraw < INTERVAL) return;
+    lastDraw = ts;
+    if (!imageData || imageData.width !== w) imageData = ctx.createImageData(w, h);
+    const data = imageData.data;
+    for (let i = 0; i < data.length; i += 4) {
+      const v = Math.random() * 255 | 0;
+      data[i] = data[i+1] = data[i+2] = v;
+      data[i+3] = 20;
+    }
+    ctx.putImageData(imageData, 0, 0);
+  }
+  requestAnimationFrame(drawGrain);
+})();
+
+/* ─────────────────────────────────
+   LOADER
+───────────────────────────────── */
+(function() {
+  const bar = document.getElementById('loader-bar');
+  const pct = document.getElementById('loader-pct');
+  const meta = document.getElementById('loader-meta');
+  const loader = document.getElementById('loader');
+  const steps = ['LOADING FONTS', 'BUILDING GRID', 'APPLYING TYPOGRAPHY', 'RENDERING ARCHIVE', 'SYSTEM READY'];
+  let p = 0;
+
+  const interval = setInterval(() => {
+    p += Math.random() * 18 + 4;
+    if (p > 100) p = 100;
+    bar.style.width = p + '%';
+    pct.textContent = Math.floor(p);
+    meta.textContent = steps[Math.floor((p/100) * (steps.length - 1))];
+
+    if (p >= 100) {
+      clearInterval(interval);
+      setTimeout(() => {
+        loader.classList.add('out');
+        document.querySelectorAll('.reveal').forEach((el, i) => {
+          setTimeout(() => el.classList.add('vis'), i * 30);
+        });
+      }, 400);
+    }
+  }, 60);
+})();
+
+/* ─────────────────────────────────
+   CURSOR — fine-pointer devices only
+───────────────────────────────── */
+const cur = document.getElementById('cur');
+const curR = document.getElementById('cur-ring');
+
+// Only activate custom cursor on real mice (fine pointer), not tablets/touch
+const isFinePointer = window.matchMedia('(pointer: fine)').matches;
+
+if (!isFinePointer) {
+  // tablet / touch: hide custom cursor elements, restore system cursor
+  cur.style.display  = 'none';
+  curR.style.display = 'none';
+  document.body.style.cursor = 'auto';
+} else {
+  let mx = -200, my = -200, rx = -200, ry = -200;
+
+  document.addEventListener('mousemove', e => {
+    mx = e.clientX; my = e.clientY;
+    cur.style.left = mx + 'px';
+    cur.style.top  = my + 'px';
+  });
+
+  (function raf() {
+    rx += (mx - rx) * .1;
+    ry += (my - ry) * .1;
+    curR.style.left = rx + 'px';
+    curR.style.top  = ry + 'px';
+    requestAnimationFrame(raf);
+  })();
+
+  document.querySelectorAll('a, button').forEach(el => {
+    el.addEventListener('mouseenter', () => { cur.classList.add('big');    curR.classList.add('big'); });
+    el.addEventListener('mouseleave', () => { cur.classList.remove('big'); curR.classList.remove('big'); });
+  });
+  document.querySelectorAll('.project, .exp-item').forEach(el => {
+    el.addEventListener('mouseenter', () => { cur.classList.add('square');    curR.classList.add('square'); });
+    el.addEventListener('mouseleave', () => { cur.classList.remove('square'); curR.classList.remove('square'); });
+  });
+}
+
+/* ─────────────────────────────────
+   CLOCK
+───────────────────────────────── */
+const clockEl = document.getElementById('nav-clock');
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const s = String(now.getSeconds()).padStart(2,'0');
+  clockEl.textContent = `THR ${h}:${m}:${s}`;
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+/* ─────────────────────────────────
+   HAMBURGER / MOBILE DRAWER
+───────────────────────────────── */
+const hamburger = document.getElementById('nav-hamburger');
+const drawer    = document.getElementById('nav-drawer');
+
+function openDrawer() {
+  hamburger.classList.add('open');
+  drawer.classList.add('open');
+  hamburger.setAttribute('aria-expanded', 'true');
+  drawer.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+}
+function closeDrawer() {
+  hamburger.classList.remove('open');
+  drawer.classList.remove('open');
+  hamburger.setAttribute('aria-expanded', 'false');
+  drawer.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+}
+hamburger.addEventListener('click', () => {
+  hamburger.classList.contains('open') ? closeDrawer() : openDrawer();
+});
+document.querySelectorAll('[data-drawer-close]').forEach(link => {
+  link.addEventListener('click', closeDrawer);
+});
+// close on outside tap
+document.addEventListener('click', e => {
+  if (!drawer.contains(e.target) && !hamburger.contains(e.target)) closeDrawer();
+});
+
+/* ─────────────────────────────────
+   INTERSECTION OBSERVER (reveal)
+───────────────────────────────── */
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('vis'); obs.unobserve(e.target); }
+  });
+}, { threshold: 0.06, rootMargin: '0px 0px -40px 0px' });
+
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+/* ─────────────────────────────────
+   HERO NAME SPLIT CHAR ANIMATION
+───────────────────────────────── */
+function splitAndAnimate(el, baseDelay) {
+  const text = el.textContent;
+  el.innerHTML = '';
+  [...text].forEach((ch, i) => {
+    const span = document.createElement('span');
+    span.className = 'char';
+    span.textContent = ch === ' ' ? '\u00A0' : ch;
+    span.style.transitionDelay = (baseDelay + i * 0.07) + 's';
+    el.appendChild(span);
+  });
+}
+
+window.addEventListener('load', () => {
+  splitAndAnimate(document.getElementById('hero-l1'), 0.9);
+  splitAndAnimate(document.getElementById('hero-l2'), 1.2);
+  setTimeout(() => {
+    document.querySelectorAll('#hero-l1 .char, #hero-l2 .char').forEach(c => c.classList.add('vis'));
+  }, 1800);
+});
+
+/* ─────────────────────────────────
+   PARALLAX: HERO GHOST
+───────────────────────────────── */
+const ghosts = document.querySelectorAll('.hero-ghost-word');
+window.addEventListener('scroll', () => {
+  const sy = window.scrollY;
+  ghosts.forEach((g, i) => {
+    const dir = i % 2 === 0 ? -1 : 1;
+    const speed = 0.06 + i * 0.03;
+    const baseX = i === 0 ? '2vw' : i === 1 ? '10vw' : '-2vw';
+    g.style.transform = `translateX(calc(${baseX} + ${sy * speed * dir}px)) translateY(${sy * speed * 0.3}px)`;
+  });
+}, { passive: true });
+
+/* ─────────────────────────────────
+   ACTIVE NAV SECTION TRACKING
+───────────────────────────────── */
+const navAs = document.querySelectorAll('.nav-links a');
+const secObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      navAs.forEach(a => {
+        a.classList.toggle('active', a.getAttribute('href') === '#' + e.target.id);
+      });
+    }
+  });
+}, { threshold: 0.35 });
+document.querySelectorAll('section[id]').forEach(s => secObs.observe(s));
+
+/* ─────────────────────────────────
+   PROJECT IMAGE MAGNETIC TILT
+───────────────────────────────── */
+document.querySelectorAll('.project').forEach(p => {
+  const plate = p.querySelector('.art-plate');
+  if (!plate) return;
+  p.addEventListener('mousemove', e => {
+    const r = p.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width - 0.5;
+    const y = (e.clientY - r.top) / r.height - 0.5;
+    plate.style.transform = `perspective(1200px) rotateY(${x * 6}deg) rotateX(${-y * 5}deg) scale(1.025)`;
+    plate.style.transition = 'transform 0.08s ease';
+  });
+  p.addEventListener('mouseleave', () => {
+    plate.style.transform = 'perspective(1200px) rotateY(0) rotateX(0) scale(1)';
+    plate.style.transition = 'transform 0.7s cubic-bezier(.16,1,.3,1)';
+  });
+});
+
+/* ─────────────────────────────────
+   GLITCH on ARCHIVE HEADING hover
+───────────────────────────────── */
+const archiveTitle = document.querySelector('.archive-head-title');
+if (archiveTitle) {
+  const original = 'SELECTED<br><span class="ao">WORKS</span>';
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#';
+  let glitchTimer;
+
+  archiveTitle.addEventListener('mouseenter', () => {
+    let count = 0;
+    glitchTimer = setInterval(() => {
+      if (count > 6) {
+        clearInterval(glitchTimer);
+        archiveTitle.innerHTML = original;
+        return;
+      }
+      const r1 = Array.from('SELECTED').map(c =>
+        Math.random() > 0.6 ? chars[Math.floor(Math.random() * chars.length)] : c
+      ).join('');
+      const r2 = Array.from('WORKS').map(c =>
+        Math.random() > 0.5 ? chars[Math.floor(Math.random() * chars.length)] : c
+      ).join('');
+      archiveTitle.innerHTML = `${r1}<br><span class="ao">${r2}</span>`;
+      count++;
+    }, 60);
+  });
+
+  archiveTitle.addEventListener('mouseleave', () => {
+    clearInterval(glitchTimer);
+    archiveTitle.innerHTML = original;
+  });
+}
+
+/* ─────────────────────────────────
+   COUNT-UP ANIMATION for #numbers
+───────────────────────────────── */
+/* ─────────────────────────────────
+   LIGHTBOX — per-project gallery
+───────────────────────────────── */
+(function() {
+  const lb          = document.getElementById('lightbox');
+  const lbImg       = document.getElementById('lb-img');
+  const lbName      = document.getElementById('lb-name');
+  const lbMetaBar   = document.getElementById('lb-meta-bar');
+  const lbCounter   = document.getElementById('lb-counter');
+  const lbStrip     = document.getElementById('lb-strip');
+  const lbSpinner   = document.getElementById('lb-spinner');
+  const lbCat       = document.getElementById('lb-cat');
+  const lbYear      = document.getElementById('lb-year');
+  const btnClose    = document.getElementById('lb-close-btn');
+  const btnPrevBar  = document.getElementById('lb-prev-btn');
+  const btnNextBar  = document.getElementById('lb-next-btn');
+  const btnPrevStg  = document.getElementById('lb-prev-stage');
+  const btnNextStg  = document.getElementById('lb-next-stage');
+
+  let images  = [];   // current project's image list
+  let current = 0;
+
+  /* collect all images from a single art-plate (cover + extras) */
+  function collectFromPlate(plate) {
+    const imgs = [];
+    plate.querySelectorAll('img[data-gallery="true"]').forEach(img => {
+      imgs.push({
+        src:      img.src,
+        title:    img.dataset.title    || img.alt || '—',
+        category: img.dataset.category || '—',
+        year:     img.dataset.year     || '—',
+      });
+    });
+    return imgs;
+  }
+
+  /* update image-count badge for a plate */
+  function updateBadge(plate) {
+    const count = plate.querySelectorAll('img[data-gallery="true"]').length;
+    const badge = plate.querySelector('.plate-img-count');
+    if (badge) badge.textContent = count + (count === 1 ? ' IMAGE' : ' IMAGES');
+  }
+
+  /* build filmstrip for current images array */
+  function buildStrip() {
+    lbStrip.innerHTML = '';
+    images.forEach((item, i) => {
+      const th = document.createElement('img');
+      th.src = item.src;
+      th.alt = item.title;
+      th.className = 'lb-thumb' + (i === current ? ' active' : '');
+      th.addEventListener('click', () => goTo(i));
+      lbStrip.appendChild(th);
+    });
+  }
+
+  /* sync active filmstrip thumb */
+  function syncStrip() {
+    lbStrip.querySelectorAll('.lb-thumb').forEach((th, i) => {
+      th.classList.toggle('active', i === current);
+    });
+    const active = lbStrip.querySelectorAll('.lb-thumb')[current];
+    if (active) active.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  }
+
+  /* load image at index with cross-fade */
+  function loadImage(idx) {
+    lbImg.classList.remove('loaded');
+    lbSpinner.classList.add('show');
+
+    const item = images[idx];
+
+    // extract base title (everything before " — 0N")
+    const baseTitle = item.title.replace(/ — \d+$/, '');
+    lbName.textContent    = baseTitle;
+    lbMetaBar.textContent = item.category + ' · ' + item.year;
+    lbCat.textContent     = item.category;
+    lbYear.textContent    = item.year;
+    lbCounter.textContent = (idx + 1) + ' / ' + images.length;
+
+    btnPrevBar.disabled = btnPrevStg.disabled = idx === 0;
+    btnNextBar.disabled = btnNextStg.disabled = idx === images.length - 1;
+
+    const tmp = new Image();
+    tmp.onload = () => {
+      lbImg.src = item.src;
+      lbImg.alt = item.title;
+      lbSpinner.classList.remove('show');
+      requestAnimationFrame(() => lbImg.classList.add('loaded'));
+    };
+    tmp.onerror = () => {
+      // show a styled "image not found" state instead of broken icon
+      lbImg.src = 'data:image/svg+xml,' + encodeURIComponent(
+        `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
+          <rect width="600" height="400" fill="#0c0c0c"/>
+          <rect x="0" y="199" width="600" height="1" fill="rgba(242,240,235,0.06)"/>
+          <rect x="299" y="0" width="1" height="400" fill="rgba(242,240,235,0.06)"/>
+          <rect x="40" y="40" width="520" height="320" fill="none" stroke="rgba(255,90,0,0.2)" stroke-width="1"/>
+          <text x="300" y="185" font-family="monospace" font-size="11" fill="rgba(255,90,0,0.6)" text-anchor="middle" letter-spacing="4">IMAGE NOT FOUND</text>
+          <text x="300" y="215" font-family="monospace" font-size="9" fill="rgba(242,240,235,0.25)" text-anchor="middle" letter-spacing="3">${item.src.split('/').pop()}</text>
+          <text x="300" y="240" font-family="monospace" font-size="8" fill="rgba(242,240,235,0.15)" text-anchor="middle" letter-spacing="2">PLACE FILE IN SAME FOLDER AS HTML</text>
+        </svg>`
+      );
+      lbSpinner.classList.remove('show');
+      requestAnimationFrame(() => lbImg.classList.add('loaded'));
+    };
+    tmp.src = item.src;
+    syncStrip();
+  }
+
+  function goTo(idx) {
+    current = Math.max(0, Math.min(images.length - 1, idx));
+    loadImage(current);
+  }
+
+  /* open lightbox scoped to one project plate */
+  function open(plate, startIdx) {
+    images  = collectFromPlate(plate);
+    current = Math.min(startIdx, images.length - 1);
+    buildStrip();
+    lb.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    loadImage(current);
+    setTimeout(() => btnClose.focus(), 100);
+  }
+
+  function close() {
+    lb.classList.remove('open');
+    document.body.style.overflow = '';
+    lbImg.classList.remove('loaded');
+    lbImg.src = '';
+  }
+
+  /* wire every art-plate */
+  function wirePlates() {
+    document.querySelectorAll('.art-plate').forEach(plate => {
+      updateBadge(plate);
+      const coverImg = plate.querySelector('img[data-gallery="true"]:not(.plate-extra-img)');
+      if (!coverImg) return;
+
+      plate.style.cursor = 'none';
+      // clicking anywhere on the plate opens at image 0
+      plate.addEventListener('click', () => open(plate, 0));
+    });
+  }
+  wirePlates();
+
+  /* ── broken image fallback for cover plates on the page ── */
+  document.querySelectorAll('.art-plate img:not(.plate-extra-img)').forEach(img => {
+    img.addEventListener('error', function() {
+      const title = this.dataset.title || this.alt || 'IMAGE';
+      const filename = (this.getAttribute('src') || '').split('/').pop();
+      // replace broken img with a styled SVG placeholder
+      const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+      svg.setAttribute('viewBox','0 0 600 400');
+      svg.style.cssText = 'width:100%;height:100%;display:block;';
+      svg.innerHTML = `
+        <rect width="600" height="400" fill="#0c0c0c"/>
+        <rect x="0" y="199" width="600" height="1" fill="rgba(242,240,235,0.05)"/>
+        <rect x="299" y="0" width="1" height="400" fill="rgba(242,240,235,0.05)"/>
+        <rect x="24" y="24" width="552" height="352" fill="none"
+              stroke="rgba(255,90,0,0.18)" stroke-width="1"/>
+        <text x="300" y="185" font-family="monospace" font-size="10"
+              fill="rgba(255,90,0,0.5)" text-anchor="middle" letter-spacing="4">NO IMAGE</text>
+        <text x="300" y="210" font-family="monospace" font-size="8"
+              fill="rgba(242,240,235,0.2)" text-anchor="middle" letter-spacing="3">${filename}</text>
+        <text x="300" y="232" font-family="monospace" font-size="7"
+              fill="rgba(242,240,235,0.12)" text-anchor="middle" letter-spacing="2">REPLACE WITH YOUR JPG</text>
+      `;
+      this.parentNode.replaceChild(svg, this);
+    }, { once: true });
+  });
+
+  /* mobile tap hint overlay */
+  document.querySelectorAll('.art-plate').forEach(plate => {
+    if (plate.querySelector('.plate-tap-hint')) return;
+    const hint = document.createElement('div');
+    hint.className = 'plate-tap-hint';
+    hint.innerHTML = '<span>TAP TO VIEW</span>';
+    hint.style.cssText = `
+      position:absolute;inset:0;display:flex;align-items:center;
+      justify-content:center;background:rgba(5,5,5,0);
+      transition:background .3s;pointer-events:none;z-index:3;
+    `;
+    hint.querySelector('span').style.cssText = `
+      font-family:var(--mono);font-size:9px;letter-spacing:.25em;
+      color:rgba(242,240,235,0);text-transform:uppercase;
+      border:1px solid rgba(242,240,235,0);padding:8px 16px;
+      transition:color .3s,border-color .3s;
+    `;
+    plate.appendChild(hint);
+    plate.addEventListener('touchstart', () => {
+      hint.style.background = 'rgba(5,5,5,.35)';
+      hint.querySelector('span').style.color = 'rgba(242,240,235,.9)';
+      hint.querySelector('span').style.borderColor = 'rgba(242,240,235,.3)';
+    }, { passive: true });
+    plate.addEventListener('touchend', () => {
+      setTimeout(() => {
+        hint.style.background = 'rgba(5,5,5,0)';
+        hint.querySelector('span').style.color = 'rgba(242,240,235,0)';
+        hint.querySelector('span').style.borderColor = 'rgba(242,240,235,0)';
+      }, 300);
+    }, { passive: true });
+  });
+
+  /* mobile: tap project-info area to open first image */
+  document.querySelectorAll('.project').forEach(article => {
+    article.querySelector('.project-info')?.addEventListener('click', e => {
+      if (e.target.closest('a')) return;
+      if (window.innerWidth <= 1024) {
+        const plate = article.querySelector('.art-plate');
+        if (plate) open(plate, 0);
+      }
+    });
+  });
+
+  /* buttons */
+  btnClose.addEventListener('click', close);
+  btnPrevBar.addEventListener('click', () => goTo(current - 1));
+  btnNextBar.addEventListener('click', () => goTo(current + 1));
+  btnPrevStg.addEventListener('click', () => goTo(current - 1));
+  btnNextStg.addEventListener('click', () => goTo(current + 1));
+  lb.addEventListener('click', e => { if (e.target === lb) close(); });
+
+  /* keyboard */
+  document.addEventListener('keydown', e => {
+    if (!lb.classList.contains('open')) return;
+    if (e.key === 'Escape')     close();
+    if (e.key === 'ArrowLeft')  goTo(current - 1);
+    if (e.key === 'ArrowRight') goTo(current + 1);
+  });
+
+  /* touch swipe */
+  let touchStartX = 0;
+  lb.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+  lb.addEventListener('touchend',   e => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 50) dx < 0 ? goTo(current + 1) : goTo(current - 1);
+  }, { passive: true });
+
+  /* cursor hover inside lightbox */
+  lb.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('mouseenter', () => { cur.classList.add('big');    curR.classList.add('big'); });
+    btn.addEventListener('mouseleave', () => { cur.classList.remove('big'); curR.classList.remove('big'); });
+  });
+
+})();
+</script>
+</body>
+</html>
