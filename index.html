@@ -405,19 +405,38 @@ nav::after {
   color: var(--orange);
 }
 
+/* ── HERO NAME — particle canvas block ──────────────────
+   Replaces the old text-stroke headline. Two stacked
+   left-aligned lines rendered into a canvas; each line
+   becomes a swarm of particles that disperse on
+   pointer / touch interaction and re-settle into the
+   word when idle. */
 .hero-name {
-  font-family: var(--disp);
-  font-size: clamp(110px, 18vw, 300px);
-  line-height: .83;
-  letter-spacing: -.02em;
+  position: relative;
   margin: 0;
+  text-align: left;
 }
-.hero-name-line1 { color: var(--fg); display: block; }
-.hero-name-line2 {
+.hero-name-canvas-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 920px;
+  /* height is driven by JS based on font metrics, this is just a safe minimum */
+  min-height: clamp(140px, 26vw, 360px);
+  touch-action: none; /* let JS handle touch instead of the browser (scroll) */
+}
+.hero-name-canvas-wrap canvas {
   display: block;
-  color: transparent;
-  -webkit-text-stroke: 2px var(--fg);
-  padding-left: clamp(24px, 4vw, 80px);
+  width: 100%;
+  height: 100%;
+}
+/* invisible accessible text — keeps the name readable to
+   screen readers / SEO even though the visual is canvas */
+.hero-name-sr {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
 }
 
 .hero-tagline {
@@ -673,13 +692,29 @@ nav::after {
   display: block;
 }
 .project-desc {
+  max-width: 400px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.desc-block { margin: 0; }
+.desc-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--blue);
+  display: block;
+  margin-bottom: 6px;
+}
+.desc-text {
   font-family: var(--body);
   font-size: 14px;
   line-height: 1.9;
   color: rgba(242,240,235,.42);
   font-weight: 300;
-  max-width: 400px;
-  flex: 1;
+  margin: 0;
 }
 .project-meta-row {
   display: grid;
@@ -1338,6 +1373,7 @@ footer .meta { opacity: .28; }
     justify-content: flex-start;
   }
   .hero-name-wrap { padding-top: 20px; }
+  .hero-name-canvas-wrap { max-width: 100%; min-height: clamp(120px, 38vw, 220px); }
   .hero-badge { margin-bottom: 20px; }
   .hero-right-col {
     display: grid;
@@ -1409,9 +1445,27 @@ footer .meta { opacity: .28; }
   .project-title { margin-bottom: 12px; }
   .project-desc { max-width: 100%; }
   .project-meta-row {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 0;
   }
+  .pm-cell {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 0;
+    border-top: 1px solid var(--rule);
+  }
+  .pm-cell:first-child {
+    border-top: none;
+    padding-top: 0;
+  }
+  .pm-cell + .pm-cell {
+    padding-left: 0;
+    border-left: none;
+  }
+  .pm-label { margin-bottom: 0; flex-shrink: 0; }
+  .pm-val { text-align: right; }
 
   /* ── philosophy ── */
   #philosophy { padding: 80px 20px 80px; }
@@ -1481,13 +1535,10 @@ footer .meta { opacity: .28; }
    SMALL PHONES  ≤ 430px
 ═══════════════════════════════════════════════ */
 @media (max-width: 430px) {
-  .hero-name { font-size: 24vw; }
-  .hero-badge span { font-size: 8px; letter-spacing: .12em; }
+  .hero-name-canvas-wrap { min-height: clamp(100px, 42vw, 180px); }
   .archive-head-title { font-size: 15vw; }
   .project-title { font-size: 12vw; }
   .project-subtitle { font-size: 14px; }
-  .project-meta-row { grid-template-columns: 1fr 1fr; }
-  .pm-cell + .pm-cell { border-left: 1px solid var(--rule); }
   .phil-statement { font-size: 13vw; }
   .exp-heading { font-size: 13vw; }
   .exp-role { font-size: 9.5vw; }
@@ -1959,8 +2010,10 @@ footer .meta { opacity: .28; }
         <span>ARCHIVE_2089 / NODE_04 / TEHRAN_IR</span>
       </div>
       <h1 class="hero-name">
-        <span class="hero-name-line1" id="hero-l1">ALI</span>
-        <span class="hero-name-line2" id="hero-l2">SAFFARI</span>
+        <span class="hero-name-sr">ALI SAFFARI</span>
+        <div class="hero-name-canvas-wrap" id="hero-particle-wrap" aria-hidden="true">
+          <canvas id="hero-particle-canvas"></canvas>
+        </div>
       </h1>
       <div class="hero-tagline reveal rd2">
         <span class="hero-tagline-item">Brand Identity</span>
@@ -2053,8 +2106,24 @@ footer .meta { opacity: .28; }
       <div>
         <span class="project-cat">Brand Identity System</span>
         <h3 class="project-title">RAYA v.c<br>IDENTITY</h3>
-        <span class="project-subtitle">Architecture of a Brand</span>
-        <p class="project-desc">Designed a Cohesive Visual Identity and Custom Typographic Logo for RAYA Venture Capital, Elevating Brand Authority.</p>
+        <div class="project-desc">
+          <div class="desc-block">
+            <span class="desc-label">Context</span>
+            <p class="desc-text">Raya VC required a visual identity that reflects trust, innovation, and long-term growth while maintaining a professional presence across digital and print applications.</p>
+          </div>
+          <div class="desc-block">
+            <span class="desc-label">Approach</span>
+            <p class="desc-text">Explored the company's positioning, industry characteristics, and visual references to define a simple and distinctive identity system.</p>
+          </div>
+          <div class="desc-block">
+            <span class="desc-label">Solution</span>
+            <p class="desc-text">Designed a scalable logo and developed a visual identity including typography, color palette, business cards, and stationery to ensure consistency across touchpoints.</p>
+          </div>
+          <div class="desc-block">
+            <span class="desc-label">Impact</span>
+            <p class="desc-text">Delivered a modern and recognizable brand identity that communicates professionalism and supports consistent brand communication.</p>
+          </div>
+        </div>
       </div>
       <div class="project-meta-row">
         <div class="pm-cell">
@@ -2115,8 +2184,25 @@ footer .meta { opacity: .28; }
       <div>
         <span class="project-cat">‌‌Book Design</span>
         <h3 class="project-title">how to stop<br>being toxic</h3>
-        <span class="project-subtitle">198-Pages</span>
-        <p class="project-desc">Book Design and Layout for “How to Stop Being Toxic” Published by Ketabrah. Includes Custom Cover Design and a Reader-Centric Interior for a Seamless Experience.</p>
+          <div class="project-desc">
+          <div class="desc-block">
+            <span class="desc-label">Context</span>
+            <p class="desc-text">Designed the cover and editorial layout for How to Stop Being Toxic, focusing on readability and a contemporary visual direction.</p>
+          </div>
+          <div class="desc-block">
+            <span class="desc-label">Approach</span>
+            <p class="desc-text">Defined the visual language through typography, grid systems, and editorial design principles.</p>
+          </div>
+          <div class="desc-block">
+            <span class="desc-label">Solution</span>
+            <p class="desc-text">Created a distinctive cover and structured page layouts that support the book's content.</p>
+          </div>
+          <div class="desc-block">
+            <span class="desc-label">Impact</span>
+            <p class="desc-text">Produced a clear, engaging, and visually refined reading experience.</p>
+          </div>
+        </div>
+        
       </div>
       <div class="project-meta-row">
         <div class="pm-cell">
@@ -2125,7 +2211,7 @@ footer .meta { opacity: .28; }
         </div>
         <div class="pm-cell">
           <span class="pm-label">Role</span>
-          <span class="pm-val">Lead Designer</span>
+          <span class="pm-val">Art Director</span>
         </div>
         <div class="pm-cell">
           <span class="pm-label">Client</span>
@@ -2177,8 +2263,24 @@ footer .meta { opacity: .28; }
       <div>
         <span class="project-cat">editorial design</span>
         <h3 class="project-title">asa<br>magazine</h3>
-        <span class="project-subtitle">EdTech Magazine</span>
-        <p class="project-desc">Editorial Design and Layout for a 12-Issue “ASA Magazine” Series Commissioned by Aroun Agency, Featuring Striking Covers and Reader-Centric Interiors.</p>
+          <div class="project-desc">
+          <div class="desc-block">
+            <span class="desc-label">Context</span>
+            <p class="desc-text">ASA was Aron Agency's internal magazine for the EdTech industry. The publication lacked a clear editorial structure, visual hierarchy, and a distinctive visual identity.</p>
+          </div>
+          <div class="desc-block">
+            <span class="desc-label">Approach</span>
+            <p class="desc-text">Analyzed contemporary editorial publications and EdTech visual trends to establish a clear editorial direction.</p>
+          </div>
+          <div class="desc-block">
+            <span class="desc-label">Solution</span>
+            <p class="desc-text">Developed a modern editorial system with a structured grid, refined typography, and a distinctive visual language to improve readability and engagement.</p>
+          </div>
+          <div class="desc-block">
+            <span class="desc-label">Impact</span>
+            <p class="desc-text">Delivered a more engaging publication with improved readability, stronger visual hierarchy, and a more distinctive editorial identity.</p>
+          </div>
+        </div>
       </div>
       <div class="project-meta-row">
         <div class="pm-cell">
@@ -2221,23 +2323,9 @@ footer .meta { opacity: .28; }
              data-category="Editorial Design / Magazine" data-year="2026">
         <!-- ↑↑↑ REPLACE: e.g. src="images/signal-02.webp" ↑↑↑ -->
 
-         <!-- ── EXTRA IMAGE 4 ── -->
-        <!-- ↓↓↓ REPLACE ↓↓↓ -->
-        <img src="asa 03.webp" alt="Asa Magazine — Image 4"
-             class="plate-extra-img"
-             data-gallery="true" data-title="Asa Magazine — 04"
-             data-category="Editorial Design / Magazine" data-year="2026">
-        <!-- ↑↑↑ REPLACE: e.g. src="images/signal-02.webp" ↑↑↑ -->
+        
 
-         <!-- ── EXTRA IMAGE 5 ── -->
-        <!-- ↓↓↓ REPLACE ↓↓↓ -->
-        <img src="asa 04.webp" alt="Asa Magazine — Image 5"
-             class="plate-extra-img"
-             data-gallery="true" data-title="Asa Magazine — 05"
-             data-category="Editorial Design / Magazine" data-year="2026">
-        <!-- ↑↑↑ REPLACE: e.g. src="images/signal-02.webp" ↑↑↑ -->
-
-        <span class="plate-img-count">5 IMAGES</span>
+        <span class="plate-img-count">3 IMAGES</span>
         <div class="plate-corner"></div>
         <div class="plate-corner-bl"></div>
         <span class="plate-label">IMG_SIGNAL_03.RAW</span>
@@ -2255,8 +2343,24 @@ footer .meta { opacity: .28; }
       <div>
         <span class="project-cat">Catalog Design</span>
         <h3 class="project-title">academy<br>catalog</h3>
-        <span class="project-subtitle">Official Catalog</span>
-        <p class="project-desc">Editorial Design and Layout for Hayaiee Acting Academy’s Official Catalog, Featuring a Custom Cover and High-End, Visual-Impact Layout.</p>
+          <div class="project-desc">
+          <div class="desc-block">
+            <span class="desc-label">Context</span>
+            <p class="desc-text">Designed a promotional catalog for Hayaiee Acting & Filmmaking Institute, introducing its programs through a contemporary editorial approach.</p>
+          </div>
+          <div class="desc-block">
+            <span class="desc-label">Approach</span>
+            <p class="desc-text">Combined typography, imagery, and structured layouts to balance information with visual storytelling.</p>
+          </div>
+          <div class="desc-block">
+            <span class="desc-label">Solution</span>
+            <p class="desc-text">Created an editorial system that emphasizes readability while showcasing the institute's atmosphere, courses, and creative identity.</p>
+          </div>
+          <div class="desc-block">
+            <span class="desc-label">Impact</span>
+            <p class="desc-text">Delivered a visually engaging catalog that presents educational content in a clear, organized, and memorable way.</p>
+          </div>
+        </div>
       </div>
       <div class="project-meta-row">
         <div class="pm-cell">
@@ -2318,9 +2422,25 @@ footer .meta { opacity: .28; }
     <div class="project-info">
       <div>
         <span class="project-cat">Poster Design</span>            <!-- ← e.g. Poster Design -->
-        <h3 class="project-title"> Promotion<br>Poster</h3>          <!-- ← your project name -->
-        <span class="project-subtitle">Book Promotion Posters</span> <!-- ← short tagline -->
-        <p class="project-desc">Poster Design and Illustration for Ketabrah, Featuring Bespoke Visual Concepts Based on In-Depth Analysis of Book Themes and Narratives.</p>
+        <h3 class="project-title"> Promotion<br>Poster</h3>
+          <div class="project-desc">
+          <div class="desc-block">
+            <span class="desc-label">Context</span>
+            <p class="desc-text">Designed a series of promotional posters for Ketabrah, introducing books across its website and mobile application.</p>
+          </div>
+          <div class="desc-block">
+            <span class="desc-label">Approach</span>
+            <p class="desc-text">Each poster was designed to reflect the tone and personality of its book while maintaining clarity and strong visual communication.</p>
+          </div>
+          <div class="desc-block">
+            <span class="desc-label">Solution</span>
+            <p class="desc-text">Combined typography, imagery, color, and composition to create distinctive promotional visuals tailored to each title.</p>
+          </div>
+          <div class="desc-block">
+            <span class="desc-label">Impact</span>
+            <p class="desc-text">Produced engaging digital posters that strengthen the visual presentation of books and attract readers' attention across online platforms.</p>
+          </div>
+        </div>
       </div>
       <div class="project-meta-row">
         <div class="pm-cell">
@@ -2329,7 +2449,7 @@ footer .meta { opacity: .28; }
         </div>
         <div class="pm-cell">
           <span class="pm-label">Role</span>
-          <span class="pm-val">Designer</span>       <!-- ← your role -->
+          <span class="pm-val">Graphic Designer</span>       <!-- ← your role -->
         </div>
         <div class="pm-cell">
           <span class="pm-label">Client</span>
@@ -2355,13 +2475,9 @@ footer .meta { opacity: .28; }
              class="plate-extra-img"
              data-gallery="true" data-title="Promotion Poster — 03"
              data-category="Promotion Poster Design" data-year="2024">
-             <!-- ── EXTRA IMAGE 3 ── -->
-        <img src="promotion 4.webp" alt="Promotion Poster — Image 4"
-             class="plate-extra-img"
-             data-gallery="true" data-title="Promotion Poster — 04"
-             data-category="Promotion Poster Design" data-year="2024">
+            
 
-        <span class="plate-img-count">4 IMAGES</span>
+        <span class="plate-img-count">3 IMAGES</span>
         <div class="plate-corner"></div>
         <div class="plate-corner-bl"></div>
         <span class="plate-label">IMG_PROJECT_05.RAW</span>
@@ -2379,15 +2495,35 @@ footer .meta { opacity: .28; }
     </div>
     <div class="project-info">
       <div>
-        <span class="project-cat">Poster Design</span>
-        <h3 class="project-title">POSTER<br>DESIGN</h3>
-        <span class="project-subtitle">Theater Poster Design</span>
-        <p class="project-desc">Concept-Driven Poster Design for Theater Productions, Capturing the Narrative and Emotional Tone of Each Performance.</p>
+        <span class="project-cat">Visual Explorations</span>
+        <h3 class="project-title">SELECTED<br>WORKS</h3>
+          <div class="project-desc">
+          <div class="desc-block">
+            <span class="desc-label">Posters</span>
+            <p class="desc-text">A selection of theatre and festival posters.</p>
+          </div>
+          <div class="desc-block">
+            <span class="desc-label">Social Media</span>
+            <p class="desc-text">Instagram posts promoting audiobooks and book-to-film adaptations.</p>
+          </div>
+          <div class="desc-block">
+            <span class="desc-label">Character Design</span>
+            <p class="desc-text">A series of characters designed to represent book categories across Ketabrah's digital platform.</p>
+          </div>
+          <div class="desc-block">
+            <span class="desc-label">Typography</span>
+            <p class="desc-text">Selected typographic explorations focused on hierarchy and visual expression.</p>
+          </div>
+          <div class="desc-block">
+            <span class="desc-label">Sketches</span>
+            <p class="desc-text">A collection of sketches exploring ideas, concepts, and visual directions.</p>
+          </div>
+        </div>
       </div>
       <div class="project-meta-row">
         <div class="pm-cell">
           <span class="pm-label">Year</span>
-          <span class="pm-val">2023</span>
+          <span class="pm-val">2022–2026</span>
         </div>
         <div class="pm-cell">
           <span class="pm-label">Role</span>
@@ -2395,7 +2531,7 @@ footer .meta { opacity: .28; }
         </div>
         <div class="pm-cell">
           <span class="pm-label">Client</span>
-          <span class="pm-val">Independent Client</span>
+          <span class="pm-val">Various Clients</span>
         </div>
       </div>
     </div>
@@ -2405,16 +2541,46 @@ footer .meta { opacity: .28; }
         <!-- ↓↓↓ REPLACE ↓↓↓ -->
         <img src="poster 1.webp" alt="Poster Design — Image 1"
              style="width:100%;height:100%;object-fit:cover;display:block;"
-             data-gallery="true" data-title="Poster Design — 01"
-             data-category="Poster Design" data-year="2023">
+             data-gallery="true" data-title="SELECTED WORKS — 01"
+             data-category="Visual Explorations" data-year="2022-2026">
         <!-- ── EXTRA IMAGE 2 ── -->
         <img src="poster 2.webp" alt="Poster Design — Image 2"
              class="plate-extra-img"
-             data-gallery="true" data-title="Poster Design — 02"
-             data-category="Poster Design" data-year="2023">
+             data-gallery="true" data-title="SELECTED WORKS — 02"
+             data-category="Visual Explorations" data-year="2022-2026">
+             <!-- ── EXTRA IMAGE 2 ── -->
+        <img src="poster 3.webp" alt="Poster Design — Image 3"
+             class="plate-extra-img"
+             data-gallery="true" data-title="SELECTED WORKS — 03"
+             data-category="Visual Explorations" data-year="2022-2026">
+             <!-- ── EXTRA IMAGE 2 ── -->
+        <img src="poster 4.webp" alt="Poster Design — Image 4"
+             class="plate-extra-img"
+             data-gallery="true" data-title="SELECTED WORKS — 04"
+             data-category="Visual Explorations" data-year="2022-2026">
+             <!-- ── EXTRA IMAGE 2 ── -->
+        <img src="poster 5.webp" alt="Poster Design — Image 5"
+             class="plate-extra-img"
+             data-gallery="true" data-title="SELECTED WORKS — 05"
+             data-category="Visual Explorations" data-year="2022-2026">
+             <!-- ── EXTRA IMAGE 2 ── -->
+        <img src="poster 6.webp" alt="Poster Design — Image 6"
+             class="plate-extra-img"
+             data-gallery="true" data-title="SELECTED WORKS — 06"
+             data-category="Visual Explorations" data-year="2022-2026">
+             <!-- ── EXTRA IMAGE 2 ── -->
+        <img src="poster 7.webp" alt="Poster Design — Image 7"
+             class="plate-extra-img"
+             data-gallery="true" data-title="SELECTED WORKS — 07"
+             data-category="Visual Explorations" data-year="2022-2026">
+             <!-- ── EXTRA IMAGE 2 ── -->
+        <img src="poster 8.webp" alt="Visual Explorations — Image 8"
+             class="plate-extra-img"
+             data-gallery="true" data-title="SELECTED WORKS — 08"
+             data-category="Visual Explorations" data-year="2022-2026">
         
              
-        <span class="plate-img-count">2 IMAGES</span>
+        <span class="plate-img-count">7 IMAGES</span>
         <div class="plate-corner"></div>
         <div class="plate-corner-bl"></div>
         <span class="plate-label">IMG_PROJECT_06.RAW</span>
@@ -2423,284 +2589,7 @@ footer .meta { opacity: .28; }
     </div>
   </article>
 
-  <!-- ─────────────────────────────────────────────
-       Project 07 — ADD YOUR OWN CONTENT BELOW
-  ───────────────────────────────────────────── -->
-  <article class="project reveal rd2">
-    <div class="project-num-col">
-      <span class="project-num">[07] — 2024</span>
-    </div>
-    <div class="project-info">
-      <div>
-        <span class="project-cat">Social Media</span>
-        <h3 class="project-title">Post<br>Design</h3>
-        <span class="project-subtitle">Instagram Post Design</span>
-        <p class="project-desc">Social Media Visual Design for Ketabrah, Developing a Cohesive Visual Language and Digital Identity for Enhanced User Engagement.</p>
-      </div>
-      <div class="project-meta-row">
-        <div class="pm-cell">
-          <span class="pm-label">Year</span>
-          <span class="pm-val">2024</span>
-        </div>
-        <div class="pm-cell">
-          <span class="pm-label">Role</span>
-          <span class="pm-val">Designer</span>
-        </div>
-        <div class="pm-cell">
-          <span class="pm-label">Client</span>
-          <span class="pm-val">Ketabrah</span>
-        </div>
-      </div>
-    </div>
-    <div class="project-img-col">
-      <div class="art-plate" data-project="project-07">
-        <!-- ── COVER IMAGE ── -->
-        <!-- ↓↓↓ REPLACE ↓↓↓ -->
-        <img src="social 1.webp" alt="Project 07 — Image 1"
-             style="width:100%;height:100%;object-fit:cover;display:block;"
-             data-gallery="true" data-title="Promotion Poster — 01"
-             data-category="Instagram Post Design" data-year="2024">
-        <!-- ── EXTRA IMAGE 2 ── -->
-        <img src="social 2.webp" alt="Project 07 — Image 2"
-             class="plate-extra-img"
-             data-gallery="true" data-title="Promotion Poster — 02"
-             data-category="Instagram Post Design" data-year="2024">
-        
-        <span class="plate-img-count">2 IMAGES</span>
-        <div class="plate-corner"></div>
-        <div class="plate-corner-bl"></div>
-        <span class="plate-label">IMG_PROJECT_07.RAW</span>
-        <span class="plate-click-hint">VIEW GALLERY ↗</span>
-      </div>
-    </div>
-  </article>
 
-  <!-- ─────────────────────────────────────────────
-       Project 08 — ADD YOUR OWN CONTENT BELOW
-  ───────────────────────────────────────────── -->
-  <article class="project reveal rd3">
-    <div class="project-num-col">
-      <span class="project-num">[08] — 2024</span>
-    </div>
-    <div class="project-info">
-      <div>
-        <span class="project-cat">Character Design</span>
-        <h3 class="project-title">Character<br>Illustration</h3>
-        <span class="project-subtitle">Character Design for Ketabrah App</span>
-        <p class="project-desc">Custom Character Design for Ketabrah’s Category Content Blocks, Adding a Playful and Humanized Layer to Genre Exploration.</p>
-      </div>
-      <div class="project-meta-row">
-        <div class="pm-cell">
-          <span class="pm-label">Year</span>
-          <span class="pm-val">2024</span>
-        </div>
-        <div class="pm-cell">
-          <span class="pm-label">Role</span>
-          <span class="pm-val">Designer</span>
-        </div>
-        <div class="pm-cell">
-          <span class="pm-label">Client</span>
-          <span class="pm-val">Ketabrah</span>
-        </div>
-      </div>
-    </div>
-    <div class="project-img-col">
-      <div class="art-plate" data-project="project-08">
-        <!-- ── COVER IMAGE ── -->
-        <!-- ↓↓↓ REPLACE ↓↓↓ -->
-        <img src="cha 1.webp" alt="Project 08 — Image 1"
-             style="width:100%;height:100%;object-fit:cover;display:block;"
-             data-gallery="true" data-title="Character illustration — 01"
-             data-category="Character Designy" data-year="2024">
-        <!-- ── EXTRA IMAGE 2 ── -->
-        <img src="cha 2.webp" alt="Project 08 — Image 2"
-             class="plate-extra-img"
-             data-gallery="true" data-title="Character illustration — 02"
-             data-category="Character Design" data-year="2024">
-        <!-- ── EXTRA IMAGE 3 ── -->
-        <img src="cha 3.webp" alt="Project 08 — Image 3"
-             class="plate-extra-img"
-             data-gallery="true" data-title="Character illustration — 03"
-             data-category="Character Design" data-year="2024">
-        <span class="plate-img-count">3 IMAGES</span>
-        <div class="plate-corner"></div>
-        <div class="plate-corner-bl"></div>
-        <span class="plate-label">IMG_PROJECT_08.RAW</span>
-        <span class="plate-click-hint">VIEW GALLERY ↗</span>
-      </div>
-    </div>
-  </article>
-
-</section>
-<!-- ─────────────────────────────────────────────
-       Project 09 — ADD YOUR OWN CONTENT BELOW
-  ───────────────────────────────────────────── -->
-  <article class="project reveal rd3">
-    <div class="project-num-col">
-      <span class="project-num">[09] — 0000</span>
-    </div>
-    <div class="project-info">
-      <div>
-        <span class="project-cat">Concept Illustration</span>
-        <h3 class="project-title">Digital<br>Illustration</h3>
-        <span class="project-subtitle">Visual Explorations</span>
-        <p class="project-desc">Personal Illustration Series, A Conceptual Exploration of Narrative-Driven Compositions, Color Theory, and Evolving Artistic Styles.</p>
-      </div>
-      <div class="project-meta-row">
-        <div class="pm-cell">
-          <span class="pm-label">Year</span>
-          <span class="pm-val">0000</span>
-        </div>
-        <div class="pm-cell">
-          <span class="pm-label">Role</span>
-          <span class="pm-val">Designer</span>
-        </div>
-        <div class="pm-cell">
-          <span class="pm-label">Client</span>
-          <span class="pm-val">Personal Exploration</span>
-        </div>
-      </div>
-    </div>
-    <div class="project-img-col">
-      <div class="art-plate" data-project="project-08">
-        <!-- ── COVER IMAGE ── -->
-        <!-- ↓↓↓ REPLACE ↓↓↓ -->
-        <img src="new 1.webp" alt="Project 08 — Image 1"
-             style="width:100%;height:100%;object-fit:cover;display:block;"
-             data-gallery="true" data-title="Digital Illustration — 01"
-             data-category="Concept Illustration" data-year="0000">
-        <!-- ── EXTRA IMAGE 2 ── -->
-        <img src="new 2.webp" alt="Project 08 — Image 2"
-             class="plate-extra-img"
-             data-gallery="true" data-title="Digital Illustration — 02"
-             data-category="Concept Illustration" data-year="0000">
-        <!-- ── EXTRA IMAGE 3 ── -->
-        <img src="new 3.webp" alt="Project 08 — Image 3"
-             class="plate-extra-img"
-             data-gallery="true" data-title="Digital Illustration — 03"
-             data-category="Concept Illustration" data-year="0000">
-        <span class="plate-img-count">3 IMAGES</span>
-        <div class="plate-corner"></div>
-        <div class="plate-corner-bl"></div>
-        <span class="plate-label">IMG_PROJECT_08.RAW</span>
-        <span class="plate-click-hint">VIEW GALLERY ↗</span>
-      </div>
-    </div>
-  </article>
-
-</section>
-<!-- ─────────────────────────────────────────────
-       Project 10 — ADD YOUR OWN CONTENT BELOW
-  ───────────────────────────────────────────── -->
-  <article class="project reveal rd3">
-    <div class="project-num-col">
-      <span class="project-num">[10] — 0000</span>
-    </div>
-    <div class="project-info">
-      <div>
-        <span class="project-cat">Typography Design</span>
-        <h3 class="project-title">Typography<br>Explorations</h3>
-        <span class="project-subtitle">Personal Typography Studies</span>
-        <p class="project-desc">Personal Series of Persian and English Typography Experiments Focused on Form, Composition, and Visual Expression.</p>
-      </div>
-      <div class="project-meta-row">
-        <div class="pm-cell">
-          <span class="pm-label">Year</span>
-          <span class="pm-val">0000</span>
-        </div>
-        <div class="pm-cell">
-          <span class="pm-label">Role</span>
-          <span class="pm-val">Designer</span>
-        </div>
-        <div class="pm-cell">
-          <span class="pm-label">Client</span>
-          <span class="pm-val">Personal Exploration</span>
-        </div>
-      </div>
-    </div>
-    <div class="project-img-col">
-      <div class="art-plate" data-project="project-08">
-        <!-- ── COVER IMAGE ── -->
-        <!-- ↓↓↓ REPLACE ↓↓↓ -->
-        <img src="type 1.webp" alt="Project 08 — Image 1"
-             style="width:100%;height:100%;object-fit:cover;display:block;"
-             data-gallery="true" data-title="Typography Explorations — 01"
-             data-category="Typography Design" data-year="0000">
-        <!-- ── EXTRA IMAGE 2 ── -->
-        <img src="type 2.webp" alt="Project 08 — Image 2"
-             class="plate-extra-img"
-             data-gallery="true" data-title="Typography Explorations — 02"
-             data-category="Typography Design" data-year="0000">
-        <!-- ── EXTRA IMAGE 3 ── -->
-        <img src="type 3.webp" alt="Project 08 — Image 3"
-             class="plate-extra-img"
-             data-gallery="true" data-title="Typography Explorations — 03"
-             data-category="Typography Design" data-year="0000">
-        <span class="plate-img-count">3 IMAGES</span>
-        <div class="plate-corner"></div>
-        <div class="plate-corner-bl"></div>
-        <span class="plate-label">IMG_PROJECT_08.RAW</span>
-        <span class="plate-click-hint">VIEW GALLERY ↗</span>
-      </div>
-    </div>
-  </article>
-
-</section>
-<!-- ─────────────────────────────────────────────
-       Project 11 — ADD YOUR OWN CONTENT BELOW
-  ───────────────────────────────────────────── -->
-  <article class="project reveal rd3">
-    <div class="project-num-col">
-      <span class="project-num">[11] — 0000</span>
-    </div>
-    <div class="project-info">
-      <div>
-        <span class="project-cat">Design Thinking</span>
-        <h3 class="project-title">Idea<br>sketching</h3>
-        <span class="project-subtitle">Conceptual Sketches</span>
-        <p class="project-desc">Conceptual Sketching and Ideation, Translating Complex Ideas into Minimal and Clean Visual Forms.</p>
-      </div>
-      <div class="project-meta-row">
-        <div class="pm-cell">
-          <span class="pm-label">Year</span>
-          <span class="pm-val">0000</span>
-        </div>
-        <div class="pm-cell">
-          <span class="pm-label">Role</span>
-          <span class="pm-val">Designer</span>
-        </div>
-        <div class="pm-cell">
-          <span class="pm-label">Client</span>
-          <span class="pm-val">Personal Exploration</span>
-        </div>
-      </div>
-    </div>
-    <div class="project-img-col">
-      <div class="art-plate" data-project="project-08">
-        <!-- ── COVER IMAGE ── -->
-        <!-- ↓↓↓ REPLACE ↓↓↓ -->
-        <img src="sketch 1.webp" alt="Project 08 — Image 1"
-             style="width:100%;height:100%;object-fit:cover;display:block;"
-             data-gallery="true" data-title="Idea Sketching — 01"
-             data-category="Design Thinking" data-year="0000">
-        <!-- ── EXTRA IMAGE 2 ── -->
-        <img src="sketch 2.webp" alt="Project 08 — Image 2"
-             class="plate-extra-img"
-             data-gallery="true" data-title="Idea Sketching — 02"
-             data-category="Design Thinking" data-year="0000">
-        <!-- ── EXTRA IMAGE 3 ── -->
-        <img src="sketch 3.webp" alt="Project 08 — Image 3"
-             class="plate-extra-img"
-             data-gallery="true" data-title="Idea Sketching — 03"
-             data-category="Design Thinking" data-year="0000">
-        <span class="plate-img-count">3 IMAGES</span>
-        <div class="plate-corner"></div>
-        <div class="plate-corner-bl"></div>
-        <span class="plate-label">IMG_PROJECT_08.RAW</span>
-        <span class="plate-click-hint">VIEW GALLERY ↗</span>
-      </div>
-    </div>
-  </article>
 
 </section>
 
@@ -3096,27 +2985,221 @@ const obs = new IntersectionObserver((entries) => {
 document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
 
 /* ─────────────────────────────────
-   HERO NAME SPLIT CHAR ANIMATION
+   HERO NAME — CANVAS PARTICLE TYPOGRAPHY
+   Ported from the React CursorDrivenParticleTypography
+   component to vanilla JS/canvas. Renders "ALI" and
+   "SAFFARI" as two left-aligned stacked lines made of
+   particles. Particles disperse on pointer / touch
+   proximity and spring back to their origin (the
+   letterform) when idle.
 ───────────────────────────────── */
-function splitAndAnimate(el, baseDelay) {
-  const text = el.textContent;
-  el.innerHTML = '';
-  [...text].forEach((ch, i) => {
-    const span = document.createElement('span');
-    span.className = 'char';
-    span.textContent = ch === ' ' ? '\u00A0' : ch;
-    span.style.transitionDelay = (baseDelay + i * 0.07) + 's';
-    el.appendChild(span);
-  });
-}
+(function() {
+  const wrap   = document.getElementById('hero-particle-wrap');
+  const canvas = document.getElementById('hero-particle-canvas');
+  if (!wrap || !canvas) return;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
-window.addEventListener('load', () => {
-  splitAndAnimate(document.getElementById('hero-l1'), 0.9);
-  splitAndAnimate(document.getElementById('hero-l2'), 1.2);
-  setTimeout(() => {
-    document.querySelectorAll('#hero-l1 .char, #hero-l2 .char').forEach(c => c.classList.add('vis'));
-  }, 1800);
-});
+  const LINES = ['ALI', 'SAFFARI'];
+  const FONT_FAMILY = "'Bebas Neue', sans-serif";
+
+  // tuning
+  const PARTICLE_SIZE       = 1.6;
+  const PARTICLE_DENSITY    = 3;     // lower = more particles (sample step, css px)
+  const DISPERSION_STRENGTH = 14;
+  const RETURN_SPEED        = 0.085;
+  const INTERACTION_RADIUS  = 90;    // css px
+
+  let particles = [];
+  let cw = 0, ch = 0, dpr = 1;
+  let pointerX = -9999, pointerY = -9999;
+  let rafId = null;
+
+  function getTextColor() {
+    return getComputedStyle(document.documentElement).getPropertyValue('--fg').trim() || '#F2F0EB';
+  }
+
+  class Particle {
+    constructor(x, y, size, color) {
+      this.x = x + (Math.random() - 0.5) * 8;
+      this.y = y + (Math.random() - 0.5) * 8;
+      this.originX = x;
+      this.originY = y;
+      this.vx = (Math.random() - 0.5) * 4;
+      this.vy = (Math.random() - 0.5) * 4;
+      this.size = size;
+      this.color = color;
+    }
+    update(mx, my) {
+      const dx = mx - this.x;
+      const dy = my - this.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < INTERACTION_RADIUS && mx !== -9999) {
+        const fx = dx / (dist || 1);
+        const fy = dy / (dist || 1);
+        const force = (INTERACTION_RADIUS - dist) / INTERACTION_RADIUS;
+        this.vx -= fx * force * DISPERSION_STRENGTH;
+        this.vy -= fy * force * DISPERSION_STRENGTH;
+      }
+
+      this.vx += (this.originX - this.x) * RETURN_SPEED;
+      this.vy += (this.originY - this.y) * RETURN_SPEED;
+
+      this.vx *= 0.86;
+      this.vy *= 0.86;
+
+      this.x += this.vx;
+      this.y += this.vy;
+    }
+    draw(ctx) {
+      ctx.fillStyle = this.color;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function buildParticles() {
+    const rect = wrap.getBoundingClientRect();
+    cw = Math.max(1, Math.floor(rect.width));
+    ch = Math.max(1, Math.floor(rect.height));
+    dpr = window.devicePixelRatio || 1;
+
+    canvas.width  = cw * dpr;
+    canvas.height = ch * dpr;
+    canvas.style.width  = cw + 'px';
+    canvas.style.height = ch + 'px';
+
+    // offscreen ctx scaled to dpr to sample text mask at full res
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const textColor = getTextColor();
+    ctx.clearRect(0, 0, cw, ch);
+
+    // Two stacked left-aligned lines. Font size scales to fit
+    // available width based on the longer word ("SAFFARI").
+    let fontSize = ch * 0.62; // initial guess: each line ~ half the box height
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+
+    function measureBoth(size) {
+      ctx.font = `400 ${size}px ${FONT_FAMILY}`;
+      return Math.max(
+        ctx.measureText(LINES[0]).width,
+        ctx.measureText(LINES[1]).width
+      );
+    }
+    // shrink until widest line fits container width (with small margin)
+    let widest = measureBoth(fontSize);
+    const maxWidth = cw * 0.98;
+    let guard = 0;
+    while (widest > maxWidth && fontSize > 8 && guard < 200) {
+      fontSize *= 0.95;
+      widest = measureBoth(fontSize);
+      guard++;
+    }
+    // also ensure both lines fit vertically
+    const lineHeight = fontSize * 1.02;
+    const totalTextHeight = lineHeight * LINES.length;
+    if (totalTextHeight > ch * 0.98) {
+      const scale = (ch * 0.98) / totalTextHeight;
+      fontSize *= scale;
+    }
+
+    ctx.font = `400 ${fontSize}px ${FONT_FAMILY}`;
+    ctx.fillStyle = textColor;
+
+    const lh = fontSize * 1.02;
+    const blockH = lh * LINES.length;
+    const startY = (ch - blockH) / 2 + fontSize * 0.82; // baseline offset approx
+
+    const baselines = [];
+    LINES.forEach((line, i) => {
+      const baseline = startY + i * lh;
+      baselines.push(baseline);
+      ctx.fillText(line, 0, baseline);
+    });
+
+    // sample the rendered text into a pixel mask (read at device pixels)
+    const imgW = canvas.width;
+    const imgH = canvas.height;
+    const data = ctx.getImageData(0, 0, imgW, imgH).data;
+
+    particles = [];
+    const step = Math.max(1, Math.round(PARTICLE_DENSITY * dpr));
+    for (let y = 0; y < imgH; y += step) {
+      for (let x = 0; x < imgW; x += step) {
+        const idx = (y * imgW + x) * 4;
+        const alpha = data[idx + 3];
+        if (alpha > 128) {
+          particles.push(new Particle(x / dpr, y / dpr, PARTICLE_SIZE, textColor));
+        }
+      }
+    }
+
+    // reset transform to identity-with-dpr for the animation draw loop
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function animate() {
+    ctx.clearRect(0, 0, cw, ch);
+    for (let i = 0; i < particles.length; i++) {
+      particles[i].update(pointerX, pointerY);
+      particles[i].draw(ctx);
+    }
+    rafId = requestAnimationFrame(animate);
+  }
+
+  function setPointerFromClient(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    pointerX = clientX - rect.left;
+    pointerY = clientY - rect.top;
+  }
+  function clearPointer() {
+    pointerX = -9999;
+    pointerY = -9999;
+  }
+
+  // mouse (fine pointer)
+  canvas.addEventListener('mousemove', e => setPointerFromClient(e.clientX, e.clientY));
+  canvas.addEventListener('mouseleave', clearPointer);
+  // also track over whole wrap, in case canvas is small relative to box
+  wrap.addEventListener('mousemove', e => setPointerFromClient(e.clientX, e.clientY));
+  wrap.addEventListener('mouseleave', clearPointer);
+
+  // touch (mobile) — disperse on touch / drag
+  wrap.addEventListener('touchstart', e => {
+    if (!e.touches[0]) return;
+    setPointerFromClient(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: true });
+  wrap.addEventListener('touchmove', e => {
+    if (!e.touches[0]) return;
+    setPointerFromClient(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: true });
+  wrap.addEventListener('touchend', clearPointer, { passive: true });
+  wrap.addEventListener('touchcancel', clearPointer, { passive: true });
+
+  // rebuild on resize
+  let resizeTimer = null;
+  const ro = new ResizeObserver(() => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(buildParticles, 120);
+  });
+  ro.observe(wrap);
+
+  // rebuild after webfonts load so Bebas Neue metrics are correct
+  function init() {
+    buildParticles();
+    if (!rafId) animate();
+  }
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(init).catch(init);
+  } else {
+    init();
+  }
+  // safety re-init shortly after load in case of late font swap
+  window.addEventListener('load', () => setTimeout(buildParticles, 300));
+})();
 
 /* ─────────────────────────────────
    PARALLAX: HERO GHOST
@@ -3200,9 +3283,6 @@ if (archiveTitle) {
   });
 }
 
-/* ─────────────────────────────────
-   COUNT-UP ANIMATION for #numbers
-───────────────────────────────── */
 /* ─────────────────────────────────
    LIGHTBOX — per-project gallery
 ───────────────────────────────── */
